@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import math
 
 st.title("Loan Repayments Calculator")
@@ -10,11 +9,21 @@ col1, col2, col3 = st.columns(3)
 loan_amount = col1.number_input("Loan Amount", min_value=0, value=700000)
 loan_term = col2.number_input("Loan Term (in years)", min_value=1, value=30)
 interest_rate = col3.number_input("Interest Rate (in %)", min_value=0.0, value=8.1)
-monthly_prepayment = col1.number_input("Additional Pre Pay (per month)", min_value=0, value=0)
-yearly_prepayment = col2.number_input("Additional Pre Pay (per year)", min_value=0, value=0)
-onetime_payment = col3.number_input("One Time Pre Payment", min_value=0, value=0)
 
-show_table = st.toggle("Show Amortization")
+monthly_prepayment, yearly_prepayment, onetime_payment, ot_when = 0,0,0,0
+mpp = col1.checkbox("Monthly Pre Pay")
+if mpp:
+    monthly_prepayment = col2.number_input("Additional Pre Pay (per month)", min_value=0, value=0)
+
+ypp = col1.checkbox("Yearly Pre Pay")
+if ypp:
+    yearly_prepayment = col2.number_input("Additional Pre Pay (per year)", min_value=0, value=0)
+
+
+opp = col1.checkbox("One Time Pre Pay")
+if opp:
+    onetime_payment = col2.number_input("One Time Pre Payment", min_value=0, value=0)
+    ot_when = col3.selectbox("One Time Payment Year", range(1,loan_term))
 
 # Calculate the repayments.
 monthly_interest_rate = (interest_rate / 100) / 12
@@ -35,25 +44,34 @@ col1.metric(label="Monthly EMI", value=f"₹{monthly_payment:,.2f}")
 col3.metric(label="Total Interest", value=f"₹{total_interest:,.0f}")
 col2.metric(label="Total Repayments", value=f"₹{total_payments:,.0f}")
 
-def calculate_loan_schedule(loan_amount, loan_term_months, monthly_prepayment):
+def calculate_loan_schedule(loan_amount, loan_term_months, monthly_prepayment, ot_when):
     schedule = []
     remaining_balance = loan_amount
 
     original_loan_amount = loan_amount
     original_loan_term_months = loan_term_months
 
-    prepay_till = original_loan_term_months/2
+    prepay_till = original_loan_term_months/2  #its worth payng only on 1st half of loan term
 
     for month in range(1, loan_term_months + 1):
         interest_payment = remaining_balance * monthly_interest_rate
         principal_payment = monthly_payment - interest_payment
         year = math.ceil(month / 12)  # Calculate the year into the loan
 
-        prepayment = 0
+        m_prepayment, y_prepayment, o_prepayment = 0,0,0
         if month <= prepay_till:
-            prepayment = monthly_prepayment
+            m_prepayment = monthly_prepayment
 
-        remaining_balance -= (monthly_payment + prepayment - interest_payment)
+        if year <= prepay_till/12:
+            y_prepayment = yearly_prepayment
+
+        if ot_when == year:
+            o_prepayment = onetime_payment
+            #only once. loop run for each month. break it
+            ot_when = 0
+
+        prepayments = m_prepayment + y_prepayment + o_prepayment
+        remaining_balance -= (monthly_payment + prepayments - interest_payment)
 
         if remaining_balance <= 0:
             # Loan is fully paid, no need to continue calculating the schedule
@@ -65,7 +83,7 @@ def calculate_loan_schedule(loan_amount, loan_term_months, monthly_prepayment):
             'Monthly Payment': monthly_payment,
             'Interest Payment': interest_payment,
             'Principal Payment': principal_payment,
-            'Prepayment': prepayment,
+            'Prepayment': prepayments,
             'Remaining Balance': max(0, remaining_balance),  # Ensure balance doesn't go negative
             'Year': year
         })
@@ -73,19 +91,25 @@ def calculate_loan_schedule(loan_amount, loan_term_months, monthly_prepayment):
     # Calculate total interest savings and total tenure reduced
     original_interest = (monthly_payment * original_loan_term_months) - original_loan_amount
     new_interest = (monthly_payment * loan_term_months) - loan_amount
-    interest_savings = original_interest - new_interest
-    tenure_reduced_months = original_loan_term_months - loan_term_months
 
-    summary = [interest_savings, tenure_reduced_months]
+    summary = [(original_interest, new_interest), (original_loan_term_months, loan_term_months)]
     return schedule, summary
 
-schedule, summaary = calculate_loan_schedule(loan_amount, number_of_payments, monthly_prepayment)
+schedule, summary = calculate_loan_schedule(loan_amount, number_of_payments, monthly_prepayment, ot_when)
 df = pd.DataFrame(schedule)
 
-st.write("### Saved Because of Prepayments")
-col1, col2, _ = st.columns(3)
-col1.metric(label="Interest Saved", value=f"₹{summaary[0]:,.2f}")
-col2.metric(label="Tenure Reduced", value=f"{summaary[1]} months")
+interest_elms, term_elms = summary
+interest_saved = interest_elms[0]-interest_elms[1]
+term_reducced = term_elms[0]-term_elms[1]
+
+if term_reducced > 0:
+    st.write("### Saved Because of Prepayments")
+    col1, _, col2 = st.columns(3)
+    col1.metric(label="Interest Saved", value=f"₹{interest_saved:,.2f}")
+    col2.metric(label="Tenure Reduced", value=f"{term_reducced} months")
+
+    col1.bar_chart([interest_elms[0], interest_elms[1]], horizontal=True)
+    col2.bar_chart([term_elms[0], term_elms[1]], horizontal=True, color="#ffaa00")
 
 # Display the data-frame as a chart.
 st.write("### Payment Schedule")
@@ -94,9 +118,13 @@ st.line_chart(payments_df,
               x_label="Years",
               y="Remaining Balance")
 
-st.line_chart(df.set_index('Month')[["Principal Payment", "Interest Payment", "Prepayment"]],
-              x_label="Months",
-              y_label="Monthly Payment")
+# st.line_chart(df.set_index('Month')[["Principal Payment", "Interest Payment", "Prepayment(M)", "Prepayment(Y)"]],
+#               x_label="Months",
+#               y_label="Monthly Payment")
 
+show_table = st.toggle("Show Amortization")
 if show_table:
-    st.table(df[["Year", "Month", "Monthly Payment", "Interest Payment", "Principal Payment", "Prepayment", "Remaining Balance"]])
+    #st.table(df[["Year", "Month", "Monthly Payment", "Interest Payment", "Principal Payment", "Prepayment", "Remaining Balance"]])
+    st.dataframe(df,
+                 use_container_width=True,
+                 hide_index=True)
