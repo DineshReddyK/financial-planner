@@ -51,7 +51,9 @@ def calculate_loan_schedule(loan_amount, loan_term_months, monthly_prepayment, o
     original_loan_amount = loan_amount
     original_loan_term_months = loan_term_months
 
-    prepay_till = original_loan_term_months/2  #its worth payng only on 1st half of loan term
+    #prepay_till = original_loan_term_months/2  #its worth payng only on 1st half of loan term
+    #print(f"Pre payments till: {prepay_till}months / {prepay_till/12} years")
+    prepay_till = original_loan_term_months
 
     for month in range(1, loan_term_months + 1):
         interest_payment = remaining_balance * monthly_interest_rate
@@ -62,7 +64,7 @@ def calculate_loan_schedule(loan_amount, loan_term_months, monthly_prepayment, o
         if month <= prepay_till:
             m_prepayment = monthly_prepayment
 
-        if year <= prepay_till/12:
+        if month % 12 == 0:
             y_prepayment = yearly_prepayment
 
         if ot_when == year:
@@ -71,7 +73,7 @@ def calculate_loan_schedule(loan_amount, loan_term_months, monthly_prepayment, o
             ot_when = 0
 
         prepayments = m_prepayment + y_prepayment + o_prepayment
-        remaining_balance -= (monthly_payment + prepayments - interest_payment)
+        remaining_balance -= round(monthly_payment + prepayments - interest_payment)
 
         if remaining_balance <= 0:
             # Loan is fully paid, no need to continue calculating the schedule
@@ -80,10 +82,10 @@ def calculate_loan_schedule(loan_amount, loan_term_months, monthly_prepayment, o
 
         schedule.append({
             'Month': month,
-            'Monthly Payment': monthly_payment,
-            'Interest Payment': interest_payment,
-            'Principal Payment': principal_payment,
-            'Prepayment': prepayments,
+            'Monthly Payment': round(monthly_payment),
+            'Interest Payment': round(interest_payment),
+            'Principal Payment': round(principal_payment),
+            'Prepayment': round(prepayments),
             'Remaining Balance': max(0, remaining_balance),  # Ensure balance doesn't go negative
             'Year': year
         })
@@ -105,11 +107,12 @@ term_reducced = term_elms[0]-term_elms[1]
 if term_reducced > 0:
     st.write("### Saved Because of Prepayments")
     col1, _, col2 = st.columns(3)
-    col1.metric(label="Interest Saved", value=f"₹{interest_saved:,.2f}")
-    col2.metric(label="Tenure Reduced", value=f"{term_reducced} months")
+    col1.metric(label="Interest Saved", value=f"₹{interest_saved:,.2f}", delta=f"{interest_saved/interest_elms[0]:.0%}")
+    col2.metric(label="Tenure Reduced", value=f"{term_reducced} months", delta=f"{term_reducced/term_elms[0]:.0%}")
 
     col1.bar_chart([interest_elms[0], interest_elms[1]], horizontal=True)
     col2.bar_chart([term_elms[0], term_elms[1]], horizontal=True, color="#ffaa00")
+
 
 # Display the data-frame as a chart.
 st.write("### Payment Schedule")

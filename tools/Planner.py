@@ -101,7 +101,7 @@ col2.metric("Total Yearly Expenses", f"₹ {yearly_expense}")
 monthly_excess = monthly_income - monthly_expense
 yearly_excess = yearly_income - yearly_expense
 
-balances_tab, portfolio_tab, plan_tab = st.tabs(["Balances", "Portpolio", "Financial Plan"])
+balances_tab, portfolio_tab, plan_tab = st.tabs(["Balances", "Portfolio", "Financial Plan"])
 
 with balances_tab:
     st.subheader("Remaining Balance")
@@ -110,7 +110,7 @@ with balances_tab:
     col2.metric(label="Yearly Excess", value=f"₹ {yearly_excess}", delta=f"{yearly_excess / yearly_income:.0%}" if yearly_income != 0 else 0)
 
 with portfolio_tab:
-    st.subheader("Investment Portpolio")
+    st.subheader("Investment Portfolio")
     col1, col2 = st.columns(2)
     total_invest_per_month = monthly_excess
     safe_asset_proportion = age / 100
@@ -121,7 +121,7 @@ with portfolio_tab:
     sa_irr = 7
     safe_asset_df = pd.DataFrame(
         {
-            "Safe Asset": ["FD/RD", "EPF/VPF/PPF", "Gold/SGB", "Corporate Bonds"],
+            "Safe Asset Optoins": ["FD or RD", "EPF or VPF or PPF", "Gold or SGB", "Corporate Bonds"],
             "IRR": [f"~ {sa_irr}%", f"~ {sa_irr}%", f"~ {sa_irr}%", f"~ {sa_irr}%"],
             "Investment": ["ANY", "ANY", "ANY", "ANY"],
         }
@@ -144,14 +144,14 @@ with portfolio_tab:
     mf_irr = [12, 15, 18]
     stock_asset_df = pd.DataFrame(
         {
-            "Stock Asset": ["Largecap Mutual Funds", "Midcap Mutual Funds", "Smallcap Mutual Funds"],
+            "Stock Asset Options": ["Largecap Mutual Funds", "Midcap Mutual Funds", "Smallcap Mutual Funds"],
             "IRR": [ f"~ {num}%" for num in mf_irr],
             "Distribution": [f"{num}%" for num in distribution],
             "Investment": investments,
         }
     )
 
-    st.info("Based on your age and risk profile, I suggest the following investment distribution", icon="™")
+    st.info("Based on your age and risk profile, I suggest the following investment distribution")
     col1, col2, col3 = st.columns(3)
     col1.metric("Safe Asset Investment",  f"{safe_asset_proportion:.0%}")
     col2.metric("Stock Asset Investment", f"{stock_asset_proportion:.0%}")
