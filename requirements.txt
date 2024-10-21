@@ -1,4 +1,5 @@
-matplotlib
-streamlit
 pandas
+streamlit
+matplotlib
+numpy_financial
 
