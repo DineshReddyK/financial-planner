@@ -41,19 +41,23 @@ def cumipmt(rate, nper, pv, start_period, end_period, type=1):
     return sum(npf.ipmt(rate, per, nper, pv, 0, type) for per in periods)
 
 
+
+st.divider()
+st.write("Over the tenure of your loan")
 interest_pay = -1 * cumipmt(interest/12, cur_month+months_remaining, loan_remaining, cur_month, months_remaining)
-st.write(round(interest_pay))
-
 total_inv = lumpsum + add_inv * months_remaining
-st.write(total_inv)
-
 fv_val = -1 * npf.fv(yr_return/12, months_remaining, add_inv, lumpsum)
-st.write(round(fv_val))
-
 excess_you_made = fv_val - total_inv
-st.write(round(excess_you_made))
+
+data = {
+    "You will pay the total interest of": f"{round(interest_pay):,}",
+    "You would have invested": f"{round(total_inv):,}",
+    "Your investment would have grown to": f"{round(fv_val):,}",
+    "Which means, you made an excess of": f"{round(excess_you_made):,}",
+}
+st.dataframe(data)
 
 if excess_you_made < interest_pay:
-    st.write("Pay off the loan")
+    st.subheader("You shuold :blue[PAY OFF] the loan")
 else:
-    st.write("Invest the ammount")
+    st.subheader("You should :red[INVEST] the amount")
