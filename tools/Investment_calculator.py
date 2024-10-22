@@ -39,9 +39,19 @@ scheme_ret = {
     "Extream Risk Equity": 30,
 }
 
+schedule = []
 for key, val in scheme_ret.items():
     adjusted_value, final_fv = calc_ret(month_inv, yearly_inc, inflation, val/100, nper)
-    st.write(key, val)
-    st.write(round(final_fv))
-    st.write(round(adjusted_value))
-    st.write("-----")
+    schedule.append(
+        {
+            "Investment": key,
+            "~Return": f"{val}%",
+            "Amount Earned": round(final_fv),
+            "Actual Amount Value": round(adjusted_value),
+            "i.e At the end of retirement": f"{(round(adjusted_value)/10000000):.2f} crore in todays money"
+        }
+    )
+
+st.divider()
+st.markdown("**With the above numbers, possible returns you could make by your retirement time are**")
+st.dataframe(schedule)
