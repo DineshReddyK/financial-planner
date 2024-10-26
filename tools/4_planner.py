@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-st.header("Planner")
-st.subheader("Basic", divider="gray")
+st.header("Financial Planner")
+# st.subheader("Basic", divider="gray")
 col1, col2, col3 = st.columns(3)
 age = col1.slider("Current Age", min_value=15, max_value=100, value=35)
 retirement_age = col2.slider("Retirement Age", min_value=35, max_value=100, value=60)

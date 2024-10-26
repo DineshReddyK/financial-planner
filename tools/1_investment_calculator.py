@@ -1,5 +1,6 @@
 import streamlit as st
 
+st.header("Investment Calculator")
 col1, buff, col2 = st.columns([2,1,2])
 current_age = col1.slider("Current Age", min_value=15, max_value=100, value=35)
 retirement_age = col2.slider("Retirement Age", min_value=35, max_value=100, value=60)
