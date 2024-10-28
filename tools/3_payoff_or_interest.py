@@ -14,7 +14,7 @@ months_remaining = col3.number_input("Months Remaining in Loan", min_value=0, va
 
 col1, col2, col3 = st.columns(3)
 lumpsum = col1.number_input("Loumpsum you have", min_value=0, value=100000)
-add_inv = col2.number_input("Amount you can invest per month", min_value=0, value=7000)
+add_inv = col2.number_input("Amount you can invest per month", min_value=0, value=0)
 yr_return = col3.number_input("Return you can generate per year", min_value=0.0, value=12.0) / 100
 
 

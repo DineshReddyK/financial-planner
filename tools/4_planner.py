@@ -1,6 +1,7 @@
-import streamlit as st
-import pandas as pd
 import numpy as np
+import pandas as pd
+import streamlit as st
+import matplotlib.pyplot as plt
 
 st.header("Financial Planner")
 # st.subheader("Basic", divider="gray")
@@ -37,7 +38,7 @@ monthly_income = income_df["Montly Income"].sum()
 col1.metric("Total Monthly Income", f"₹ {monthly_income}")
 
 
-col2.markdown("*Yearly Income After Taxes & Deductions**")
+col2.markdown("**Yearly Income After Taxes & Deductions**")
 yr_df = pd.DataFrame({
         "Income Stream": ["Bonus", "Extra Income1", "Extra Income2", "Extra Income3"],
         "Yearly Income": [5250, 0, 0, 0],
@@ -122,8 +123,8 @@ with portfolio_tab:
     safe_asset_df = pd.DataFrame(
         {
             "Safe Asset Optoins": ["FD or RD", "EPF or VPF or PPF", "Gold or SGB", "Corporate Bonds"],
-            "IRR": [f"~ {sa_irr}%", f"~ {sa_irr}%", f"~ {sa_irr}%", f"~ {sa_irr}%"],
-            "Investment": ["ANY", "ANY", "ANY", "ANY"],
+            "IRR": [f"{sa_irr}%", f"{sa_irr}%", f"{sa_irr}%", f"{sa_irr}%"],
+            "Investment": ["ANY %", "ANY %", "ANY % ", "ANY %"],
         }
     )
 
@@ -144,10 +145,10 @@ with portfolio_tab:
     mf_irr = [12, 15, 18]
     stock_asset_df = pd.DataFrame(
         {
-            "Stock Asset Options": ["Largecap Mutual Funds", "Midcap Mutual Funds", "Smallcap Mutual Funds"],
-            "IRR": [ f"~ {num}%" for num in mf_irr],
-            "Distribution": [f"{num}%" for num in distribution],
+            "Stock Asset Options": ["Largecap MF", "Midcap MF", "Smallcap MF"],
+            "IRR": [ f"{num}%" for num in mf_irr],
             "Investment": investments,
+            "Distribution": [f"{num}%" for num in distribution],
         }
     )
 
@@ -161,8 +162,18 @@ with portfolio_tab:
 
     st.markdown("**Investment Options**")
     st.dataframe(safe_asset_df, hide_index=True)
-    st.dataframe(stock_asset_df, hide_index=True)
+    col1, col2 = st.columns(2)
+    col1.dataframe(stock_asset_df, hide_index=True)
 
+    fig, ax = plt.subplots()
+    ax.pie(stock_asset_df['Investment'], labels=stock_asset_df['Stock Asset Options'],
+            autopct=lambda pct: f'{pct:.1f}%\n({int(pct/100.*sum(stock_asset_df["Investment"]))})',
+            shadow=False,
+            startangle=90
+            )
+    ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+    col2.pyplot(fig)
     # Calculate the sum product
     blend_stock_return = np.dot(distribution, mf_irr)
     col3.metric("Blended Stock Return", f" {blend_stock_return/100}%")

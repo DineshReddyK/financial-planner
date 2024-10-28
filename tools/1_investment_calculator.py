@@ -6,8 +6,8 @@ current_age = col1.slider("Current Age", min_value=15, max_value=100, value=35)
 retirement_age = col2.slider("Retirement Age", min_value=35, max_value=100, value=60)
 
 col1, col2, col3 = st.columns(3)
-month_inv = col1.number_input("Montly Contribution", min_value=0, value=5000)
-yearly_inc = col2.number_input("Yearly Increase In Contribution", min_value=0.0, max_value=100.0, value=5.0) / 100
+month_inv = col1.number_input("Montly Contribution", min_value=0, value=10000)
+yearly_inc = col2.number_input("Yearly Increase In Contribution", min_value=0.0, max_value=100.0, value=6.0) / 100
 inflation = col3.number_input("Inflattion Rate", min_value=0.0, max_value=100.0, value=6.0) / 100
 
 #nper - number of periods (months)
