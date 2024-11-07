@@ -10,9 +10,9 @@ tax_slab = col2.number_input("Your Tax Slab", value=30.0)
 st.divider()
 
 interest = principal * (rate / 100) * time
-tds = 0.10 * interest
+tds = 0.10 * interest if interest > 40000 else 0
 total_tax = (tax_slab / 100) * interest
-net_interest = interest - total_tax
+net_interest = interest - tds - total_tax
 profit_percentage = (net_interest / principal) * 100
 
 col1, col2, col3 = st.columns(3)
