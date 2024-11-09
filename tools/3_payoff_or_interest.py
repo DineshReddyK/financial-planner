@@ -5,14 +5,13 @@ import numpy_financial as npf
 
 st.title("Payoff or Invest Calculator")
 
-col1, col2, col3 = st.columns([2,1,2])
+col1, col2, col3, col4 = st.columns(4)
 
 loan_remaining = col1.number_input("Loan Amount Remaining", min_value=0, value=700000)
-interest = col3.number_input("Interest", min_value=0.0, value=8.0) / 100
-cur_month = col1.number_input("Current Month Of The Loan", min_value=0, value=15)
-months_remaining = col3.number_input("Months Remaining in Loan", min_value=0, value=60)
+interest = col2.number_input("Interest", min_value=0.0, value=8.0) / 100
+cur_month = col3.number_input("Current Month Of The Loan", min_value=0, value=15)
+months_remaining = col4.number_input("Months Remaining in Loan", min_value=0, value=60)
 
-col1, col2, col3 = st.columns(3)
 lumpsum = col1.number_input("Loumpsum you have", min_value=0, value=100000)
 add_inv = col2.number_input("Amount you can invest per month", min_value=0, value=0)
 yr_return = col3.number_input("Return you can generate per year", min_value=0.0, value=12.0) / 100

@@ -1,28 +1,42 @@
 import streamlit as st
 import pandas as pd
 import math
+from tools.utils import retriever, keeper
 
 st.title("Loan Repayments Calculator")
 
-# st.write("### Input Data")
-col1, col2, col3 = st.columns(3)
-loan_amount = col1.number_input("Loan Amount", min_value=0, value=700000)
-loan_term = col2.number_input("Loan Term (in years)", min_value=1, value=30)
-interest_rate = col3.number_input("Interest Rate (in %)", min_value=0.0, value=8.1)
+if 'loan_amount' not in st.session_state:
+    st.session_state.loan_amount = 700000
+    st.session_state.loan_term = 30
+    st.session_state.interest_rate = 8.1
 
+retriever("loan_amount")
+retriever("loan_term")
+retriever("interest_rate")
+
+col1, col2, col3 = st.columns(3)
+loan_amount = col1.number_input("Loan Amount", min_value=0, key="_loan_amount", on_change=keeper, args=['loan_amount'])
+loan_term = col2.number_input("Loan Term (in years)", min_value=1, key="_loan_term", on_change=keeper, args=['loan_term'])
+interest_rate = col3.number_input("Interest Rate (in %)", min_value=0.0, key="_interest_rate", on_change=keeper, args=['interest_rate'])
+
+st.session_state.loan_amount = loan_amount
+st.session_state.loan_term = loan_term
+st.session_state.interest_rate = interest_rate
+
+print("sess: ", st.session_state.loan_term)
 monthly_prepayment, yearly_prepayment, onetime_payment, ot_when = 0,0,0,0
 mpp = col1.checkbox("Monthly Pre Pay")
 if mpp:
-    monthly_prepayment = col2.number_input("Additional Pre Pay (per month)", min_value=0, value=0)
+    monthly_prepayment = col1.number_input("Additional Pre Pay (per month)", min_value=0, value=0)
 
-ypp = col1.checkbox("Yearly Pre Pay")
+ypp = col2.checkbox("Yearly Pre Pay")
 if ypp:
     yearly_prepayment = col2.number_input("Additional Pre Pay (per year)", min_value=0, value=0)
 
 
-opp = col1.checkbox("One Time Pre Pay")
+opp = col3.checkbox("One Time Pre Pay")
 if opp:
-    onetime_payment = col2.number_input("One Time Pre Payment", min_value=0, value=0)
+    onetime_payment = col3.number_input("One Time Pre Payment", min_value=0, value=0)
     ot_when = col3.selectbox("One Time Payment Year", range(1,loan_term))
 
 # Calculate the repayments.

@@ -1,5 +1,5 @@
 import streamlit as st
-
+st.set_page_config(layout='wide')
 inv_cal = st.Page("./tools/1_investment_calculator.py", title="Investment Calculator")
 emi_cal = st.Page("./tools/2_mortgage_calculator.py", title="Mortgage Calculator")
 fd_cal = st.Page("./tools/5_fd_calculator.py", title="FD Calculator")
