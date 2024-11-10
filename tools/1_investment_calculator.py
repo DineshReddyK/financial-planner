@@ -16,22 +16,15 @@ retriever("month_inv")
 retriever("yearly_inc")
 retriever("inflation")
 
-col1, buff, col2 = st.columns([2,1,2])
+col1, col2, col3 = st.columns(3)
 current_age = col1.slider("Current Age", min_value=15, max_value=100, key="_current_age", on_change=keeper, args=['current_age'])
 retirement_age = col2.slider("Retirement Age", min_value=35, max_value=100, key="_retirement_age", on_change=keeper, args=['retirement_age'])
-
 col1, col2, col3 = st.columns(3)
+inflation = col3.number_input("Inflation Rate", min_value=0.0, max_value=100.0, key="_inflation", on_change=keeper, args=['inflation'])
 month_inv = col1.number_input("Montly Contribution", min_value=0, key="_month_inv", on_change=keeper, args=['month_inv'])
 yearly_inc = col2.number_input("Yearly Increase In Contribution", min_value=0.0, max_value=100.0, key="_yearly_inc", on_change=keeper, args=['yearly_inc'])
-yearly_inc_p = yearly_inc / 100
-inflation = col3.number_input("Inflattion Rate", min_value=0.0, max_value=100.0, key="_inflation", on_change=keeper, args=['inflation'])
 inflation_p = inflation / 100
-
-st.session_state.current_age = current_age
-st.session_state.retirement_age = retirement_age
-st.session_state.month_inv = month_inv
-st.session_state.yearly_inc = yearly_inc
-st.session_state.inflation = inflation
+yearly_inc_p = yearly_inc / 100
 
 #nper - number of periods (months)
 nper = (retirement_age - current_age) * 12

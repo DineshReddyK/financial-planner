@@ -1,4 +1,5 @@
 import streamlit as st
+from tools.utils import retriever, keeper
 
 st.header("FD or Liquid MF (Growth Plan)?")
 
@@ -43,18 +44,37 @@ def calculate_savings_returns(principal, rate, months, tax_slab):
     profit_percentage = (net_interest / principal) * 100
     return net_interest, profit_percentage, interest, total_tax
 
-st.markdown("**Want to invest lumpsum for short duration and can't decide which is best risk free investment?**")
-st.markdown("**Possible risk free investment options are**")
-st.markdown("1. FD\n2. Liquid MF (Growth) \n3. Savings Bank")
+st.markdown("""
+            Want to invest lumpsum for short duration and can't decide which is best risk free investment?<br>
+            Possible risk free investment options are<br>
+            1. Fixed Deposit
+            2. Liquid MF (Growth)
+            3. Savings Bank
+            """, unsafe_allow_html=True)
 st.divider()
 
+if "principal_" not in st.session_state:
+    st.session_state.principal_ = 1000000
+    st.session_state.months_ = 12
+    st.session_state.tax_slab_ = 30
+    st.session_state.fd_rate_ = 6.0
+    st.session_state.savings_rate_ = 4.5
+    st.session_state.mf_cagr_ = 5.0
+
+retriever("principal_")
+retriever("months_")
+retriever("tax_slab_")
+retriever("fd_rate_")
+retriever("savings_rate_")
+retriever("mf_cagr_")
+
 col1, col2, col3 = st.columns(3)
-principal = col1.number_input("Principal Amount", min_value=5000, value=1000000)
-months = col2.number_input("Investmen Period (Months)", min_value=1, value=12)
-tax_slab = col3.number_input("Your Tax Slab", value=30.0)
-fd_rate = col1.number_input("FD Interest Rate (Year)", min_value=0.0, value=6.0)
-savings_rate = col2.number_input("Bank Interest Rate (Year)", min_value=0.0, value=4.5)
-mf_cagr = col3.number_input("MF CAGR", min_value=0.0, value=5.0)
+principal = col1.number_input("Principal Amount", min_value=5000, key="_principal_", on_change=keeper, args=['principal_'])
+months = col2.number_input("Investmen Period (Months)", min_value=1, key="_months_", on_change=keeper, args=['months_'])
+tax_slab = col3.number_input("Your Tax Slab", min_value=1, key="_tax_slab_", on_change=keeper, args=['tax_slab_'])
+fd_rate = col1.number_input("FD Interest Rate", min_value=0.0, key="_fd_rate_", on_change=keeper, args=['fd_rate_'])
+mf_cagr = col3.number_input("MF CAGR", min_value=0.0, key="_mf_cagr_", on_change=keeper, args=['mf_cagr_'])
+savings_rate = col2.number_input("Bank Interest Rate (Year)", min_value=0.0, key="_xsavings_rate_", on_change=keeper, args=['savings_rate_'])
 
 fd_net, fd_profit, fd_int_o, fd_tds, fd_tot_tax = calculate_fd_returns(principal, fd_rate, months, tax_slab)
 mf_net, mf_profit, mf_ret_o, stcg_tax, ltcg_tax = calculate_mf_returns(principal, mf_cagr, months, tax_slab)

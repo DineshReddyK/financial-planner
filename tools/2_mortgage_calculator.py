@@ -23,7 +23,6 @@ st.session_state.loan_amount = loan_amount
 st.session_state.loan_term = loan_term
 st.session_state.interest_rate = interest_rate
 
-print("sess: ", st.session_state.loan_term)
 monthly_prepayment, yearly_prepayment, onetime_payment, ot_when = 0,0,0,0
 mpp = col1.checkbox("Monthly Pre Pay")
 if mpp:
@@ -36,7 +35,7 @@ if ypp:
 
 opp = col3.checkbox("One Time Pre Pay")
 if opp:
-    onetime_payment = col3.number_input("One Time Pre Payment", min_value=0, value=0)
+    onetime_payment = col3.number_input("How Much You Can Pay", min_value=0, value=0)
     ot_when = col3.selectbox("One Time Payment Year", range(1,loan_term))
 
 # Calculate the repayments.
