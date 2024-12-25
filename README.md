@@ -1,4 +1,4 @@
-# Financial Planner
+# Financial Planner (for INDIAN citizens)
 
 **Note**: I am not a financial advisor. This project is inspired by multiple financial advisors and their calculators.
 
