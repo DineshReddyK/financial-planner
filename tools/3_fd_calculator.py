@@ -22,8 +22,8 @@ tax_slab = col4.number_input("Your Tax Slab", key="_tax_slab", on_change=keeper,
 
 st.divider()
 st.markdown("""
-            The derived values are approximate. Actual value depend on how bank does compunding.<br>
-            Some banks do compunding monthly, some quaterly and some annually!
+            The derived values are approximate. Actual value depend on how bank does compounding.<br>
+            Some banks do compounding monthly, some quaterly and some annually!
             """, unsafe_allow_html=True)
 st.markdown("")
 
