@@ -5,6 +5,8 @@
 ## Overview
 Welcome to the Financial Planner! This repository contains a suite of financial tools developed in pure Python, designed to help you make informed financial decisions. Whether you're planning for retirement, managing your mortgage, or deciding between different investment options, these tools have got you covered.
 
+![demo](./assets/fin-plan-demo.png) ![finplan](./assets/fin-plan-portfolio.png)
+
 ## Tools
 ### Investment Calculator
 The Investment Calculator provides a glimpse of potential returns you can achieve after retirement by making investments in various categories. It helps you compare different investment options and choose the one that aligns best with your financial goals.
@@ -23,6 +25,7 @@ Unsure whether to invest your lump sum in a Fixed Deposit or Mutual Funds? This 
 
 ### Financial Planner
 The Financial Planner is your complete guide to financial planning. It integrates all the tools mentioned above to provide you with a comprehensive financial strategy, helping you achieve your long-term financial goals.
+
 
 ## Getting Started
 To get started with the Financial Planner tools, follow these steps:
