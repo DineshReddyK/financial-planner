@@ -5,7 +5,12 @@
 ## Overview
 Welcome to the Financial Planner! This repository contains a suite of financial tools developed in pure Python, designed to help you make informed financial decisions. Whether you're planning for retirement, managing your mortgage, or deciding between different investment options, these tools have got you covered.
 
+#### Deployed and Hosted on streamlit - [di-financial-planner](https://di-financial-planner.streamlit.app/)
+
+<br>
+
 ![demo](./assets/fin-plan-demo.png) ![finplan](./assets/fin-plan-portfolio.png)
+
 
 ## Tools
 ### Investment Calculator
