@@ -9,7 +9,7 @@ Welcome to the Financial Planner! This repository contains a suite of financial 
 
 <br>
 
-![demo](./assets/fin-plan-demo.png) ![finplan](./assets/fin-plan-portfolio.png)
+![finplan](./assets/fin-plan-portfolio.png)
 
 
 ## Tools
