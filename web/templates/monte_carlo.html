@@ -1,26 +1,72 @@
 {% extends "base.html" %}
 {% import '_charts_macros.html' as ch %}
 {% block content %}
-<h1 class="text-2xl font-bold text-white">Monte Carlo</h1>
+<a href="/" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-400 transition mb-6">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+  All tools
+</a>
+<h1 class="text-2xl font-bold text-white">Risk simulator (Monte Carlo)</h1>
 <div class="mt-3 max-w-3xl space-y-2 text-sm leading-relaxed text-slate-400">
-  <p>Runs many random market paths with volatility, adds your starting corpus and monthly contributions, and shows how wide ending balances can be — median, mean, and weaker/stronger outcomes.</p>
-  <p>A simulation is not a forecast; higher volatility means more uncertainty, not a promise of any band.</p>
+  <p>Runs many random market paths — each with lognormal monthly returns — starting from your corpus with regular monthly contributions. Outputs the range of possible ending balances.</p>
+  <p>Higher volatility = wider spread. This is not a forecast; P10/P90 show the 10th and 90th percentile scenarios out of all simulated paths.</p>
 </div>
-<form method="post" class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-  <label class="text-sm text-slate-400">Start corpus<input name="init" value="{{ init | default(500000) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
-  <label class="text-sm text-slate-400">Monthly contrib.<input name="pm" value="{{ pm | default(25000) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
-  <label class="text-sm text-slate-400">Months<input name="mo" value="{{ mo | default(240) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
-  <label class="text-sm text-slate-400">Mean return %<input name="mu" value="{{ mu | default(11) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
-  <label class="text-sm text-slate-400">Volatility %<input name="sig" value="{{ sig | default(15) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
-  <label class="text-sm text-slate-400">Paths<input name="paths" value="{{ paths | default(800) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
-  <label class="text-sm text-slate-400">Seed<input name="seed" value="{{ seed | default(42) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
-  <div class="flex items-end"><button class="rounded-xl bg-emerald-500 px-6 py-2.5 font-semibold text-slate-950">Simulate</button></div>
+
+<form method="post" class="mt-8 grid gap-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:grid-cols-2 lg:grid-cols-3">
+  <label class="block text-sm text-slate-400">Starting corpus (₹)
+    <input name="init" type="number" min="0" value="{{ init | default(500000) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <label class="block text-sm text-slate-400">Monthly contribution (₹)
+    <input name="pm" type="number" min="0" value="{{ pm | default(25000) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <label class="block text-sm text-slate-400">Duration (months)
+    <input name="mo" type="number" min="12" value="{{ mo | default(240) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <label class="block text-sm text-slate-400">Mean annual return %
+    <input name="mu" type="number" step="0.1" value="{{ mu | default(11) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <label class="block text-sm text-slate-400">Annual volatility % (std dev)
+    <input name="sig" type="number" step="0.1" min="0" value="{{ sig | default(15) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <label class="block text-sm text-slate-400">Simulation paths
+    <input name="paths" type="number" min="100" max="5000" value="{{ paths | default(800) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <label class="block text-sm text-slate-400">Random seed (reproducibility)
+    <input name="seed" type="number" value="{{ seed | default(42) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <div class="flex items-end sm:col-span-2 lg:col-span-1">
+    <button class="w-full rounded-xl bg-emerald-500 py-2.5 font-semibold text-slate-950 hover:bg-emerald-400 transition">Simulate</button>
+  </div>
 </form>
+
 {% if mc %}
-<div class="mt-8 grid gap-3 sm:grid-cols-3 text-sm">
-  <p class="rounded-lg border border-slate-800 p-3">Median ₹ {{ "{:,.0f}".format(mc.median) }}</p>
-  <p class="rounded-lg border border-slate-800 p-3">P10 ₹ {{ "{:,.0f}".format(mc.p10) }}</p>
-  <p class="rounded-lg border border-slate-800 p-3">P90 ₹ {{ "{:,.0f}".format(mc.p90) }}</p>
+<div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="result-card">
+    <p class="result-label">P10 (pessimistic)</p>
+    <p class="result-value text-rose-300">₹ {{ "{:,.0f}".format(mc.p10) }}</p>
+    <p class="mt-1 text-xs text-slate-500">1 in 10 paths end below this</p>
+  </div>
+  <div class="result-card border-emerald-600/30 bg-emerald-950/20">
+    <p class="result-label">Median (50th pct)</p>
+    <p class="result-value text-emerald-300">₹ {{ "{:,.0f}".format(mc.median) }}</p>
+    <p class="mt-1 text-xs text-slate-500">half of paths above, half below</p>
+  </div>
+  <div class="result-card">
+    <p class="result-label">Mean</p>
+    <p class="result-value text-white">₹ {{ "{:,.0f}".format(mc.mean) }}</p>
+    <p class="mt-1 text-xs text-slate-500">average of all {{ mc.paths }} paths</p>
+  </div>
+  <div class="result-card">
+    <p class="result-label">P90 (optimistic)</p>
+    <p class="result-value text-sky-300">₹ {{ "{:,.0f}".format(mc.p90) }}</p>
+    <p class="mt-1 text-xs text-slate-500">1 in 10 paths end above this</p>
+  </div>
 </div>
 {{ ch.render_chart('mc-chart', chart_json) }}
 {% endif %}

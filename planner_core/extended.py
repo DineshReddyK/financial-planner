@@ -167,12 +167,14 @@ def rent_vs_buy_snapshot(
     loan_months_total = loan_tenure_years * 12
 
     for m in range(1, months + 1):
-        int_port = buyer_loan_bal * r_loan if buyer_loan_bal > 0 else 0.0
-        princ = emi - int_port if buyer_loan_bal > 0 else 0.0
+        # capture before deducting so buy_monthly is correct in the month loan is fully paid
+        loan_active = buyer_loan_bal > 1e-6
+        int_port = buyer_loan_bal * r_loan if loan_active else 0.0
+        princ = emi - int_port if loan_active else 0.0
         buyer_loan_bal = max(0.0, buyer_loan_bal - princ)
         home_val *= 1 + r_home_m
 
-        buy_monthly = emi + maint_m
+        buy_monthly = (emi if loan_active else 0.0) + maint_m
         total_buy_cash += buy_monthly
 
         if m % 12 == 1 and m > 1:
@@ -315,6 +317,145 @@ def monte_carlo_retirement_corpus(
         "p90": float(np.percentile(arr, 90)),
         "mean": float(np.mean(arr)),
         "paths": n_paths,
+    }
+
+
+_ALLOCATIONS: dict[str, dict[str, tuple[float, float]]] = {
+    "conservative": {
+        "Large-cap / index equity": (0.30, 11.0),
+        "Debt MF / FD": (0.35, 7.0),
+        "PPF / EPF top-up": (0.20, 8.0),
+        "Gold (SGB / ETF)": (0.10, 8.0),
+        "Liquid fund": (0.05, 6.5),
+    },
+    "moderate": {
+        "Flexi-cap equity SIP": (0.50, 12.0),
+        "Debt MF / hybrid": (0.25, 8.0),
+        "PPF / EPF top-up": (0.10, 8.0),
+        "Gold (SGB / ETF)": (0.10, 8.0),
+        "Liquid fund": (0.05, 6.5),
+    },
+    "aggressive": {
+        "Mid / small-cap equity": (0.60, 14.0),
+        "Flexi-cap / hybrid": (0.15, 10.0),
+        "PPF / EPF top-up": (0.05, 8.0),
+        "Gold (SGB / ETF)": (0.10, 8.0),
+        "Liquid fund": (0.10, 6.5),
+    },
+}
+
+
+def full_financial_plan(
+    monthly_income: float,
+    monthly_essential: float,
+    monthly_discretionary: float,
+    monthly_emi_outgo: float,
+    current_lumpsum: float,
+    current_age: int,
+    retirement_age: int,
+    risk_profile: str = "moderate",
+) -> dict[str, Any]:
+    """
+    Comprehensive financial snapshot + allocation plan.
+
+    Returns a dict with health indicators, monthly surplus, emergency fund status,
+    suggested SIP + lumpsum allocation, and projected corpus at retirement.
+    """
+    total_expenses = monthly_essential + monthly_discretionary + monthly_emi_outgo
+    monthly_surplus = monthly_income - total_expenses
+    savings_rate = (monthly_surplus / monthly_income * 100) if monthly_income > 0 else 0.0
+
+    # Emergency fund: 6 months of living expenses (excluding EMI)
+    monthly_living = monthly_essential + monthly_discretionary
+    emergency_target = monthly_living * 6
+    emergency_gap = max(0.0, emergency_target - current_lumpsum)
+    emergency_months_covered = min(6.0, current_lumpsum / monthly_living) if monthly_living > 1 else 6.0
+
+    # Investable amounts
+    investable_lumpsum = max(0.0, current_lumpsum - emergency_target)
+    monthly_investable = max(0.0, monthly_surplus)
+
+    emi_ratio = (monthly_emi_outgo / monthly_income * 100) if monthly_income > 0 else 0.0
+
+    # Health ratings
+    if savings_rate >= 30:
+        savings_health = ("excellent", "Excellent (>30%)", "emerald")
+    elif savings_rate >= 20:
+        savings_health = ("good", "Good (20–30%)", "emerald")
+    elif savings_rate >= 10:
+        savings_health = ("ok", "Could improve (10–20%)", "amber")
+    elif monthly_surplus >= 0:
+        savings_health = ("low", "Low (<10%) — review expenses", "amber")
+    else:
+        savings_health = ("deficit", "Deficit — expenses exceed income", "rose")
+
+    if emi_ratio <= 30:
+        debt_health = ("ok", f"Manageable ({emi_ratio:.0f}% of income)", "emerald")
+    elif emi_ratio <= 50:
+        debt_health = ("high", f"Moderate load ({emi_ratio:.0f}% of income)", "amber")
+    else:
+        debt_health = ("very_high", f"High ({emi_ratio:.0f}% of income) — may limit savings", "rose")
+
+    if emergency_gap <= 0:
+        em_health = ("covered", "Fully covered (6 months)", "emerald")
+    elif current_lumpsum >= monthly_living * 3:
+        em_health = ("partial", f"{emergency_months_covered:.1f} months covered — top up", "amber")
+    else:
+        em_health = ("low", f"Only {emergency_months_covered:.1f} months — build urgently", "rose")
+
+    years = max(0, retirement_age - current_age)
+    months = years * 12
+    alloc_map = _ALLOCATIONS.get(risk_profile.lower(), _ALLOCATIONS["moderate"])
+
+    sip_rows: list[dict[str, Any]] = []
+    total_corpus = 0.0
+
+    for name, (pct, return_pct) in alloc_map.items():
+        sip_amt = monthly_investable * pct
+        lump_amt = investable_lumpsum * pct
+        r = return_pct / 100 / 12
+
+        if months > 0 and r > 1e-12:
+            fv_sip = sip_amt * (((1 + r) ** months - 1) / r) * (1 + r)
+        else:
+            fv_sip = sip_amt * months
+
+        fv_lump = lump_amt * ((1 + return_pct / 100) ** years) if years > 0 else lump_amt
+        fv_total = fv_sip + fv_lump
+        total_corpus += fv_total
+
+        sip_rows.append({
+            "category": name,
+            "pct": round(pct * 100),
+            "monthly_sip": round(sip_amt),
+            "lump_deploy": round(lump_amt),
+            "assumed_return": return_pct,
+            "fv_sip": round(fv_sip),
+            "fv_lump": round(fv_lump),
+            "fv_total": round(fv_total),
+        })
+
+    return {
+        "monthly_income": monthly_income,
+        "monthly_essential": monthly_essential,
+        "monthly_discretionary": monthly_discretionary,
+        "monthly_emi_outgo": monthly_emi_outgo,
+        "total_expenses": total_expenses,
+        "monthly_surplus": monthly_surplus,
+        "savings_rate": savings_rate,
+        "savings_health": savings_health,
+        "emergency_target": emergency_target,
+        "emergency_gap": emergency_gap,
+        "emergency_months_covered": emergency_months_covered,
+        "em_health": em_health,
+        "investable_lumpsum": investable_lumpsum,
+        "monthly_investable": monthly_investable,
+        "emi_ratio": emi_ratio,
+        "debt_health": debt_health,
+        "years": years,
+        "risk_profile": risk_profile,
+        "sip_rows": sip_rows,
+        "total_corpus": round(total_corpus),
     }
 
 

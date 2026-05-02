@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% import '_charts_macros.html' as ch %}
+{% block content %}
+<a href="/" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-400 transition mb-6">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+  All tools
+</a>
+
+<h1 class="text-2xl font-bold text-white">Personal financial planner</h1>
+<div class="mt-3 max-w-3xl space-y-2 text-sm leading-relaxed text-slate-400">
+  <p>Enter your monthly income, expenses, existing EMIs, and any lumpsum savings. Tell us your risk appetite — we'll show your financial health snapshot, how much you can invest each month, and where to put it to build a corpus by retirement.</p>
+  <p>All projections are illustrative estimates using assumed return rates per asset class. Adjust inputs for what-if scenarios.</p>
+</div>
+
+{# ── Input form ── #}
+<form method="post" class="mt-8 space-y-5">
+
+  {# Income & expenses #}
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+    <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-emerald-400">Income &amp; expenses (monthly, ₹)</h2>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <label class="block text-sm text-slate-400">Take-home income
+        <input name="income" type="number" min="0" value="{{ income | default(100000) }}"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+      </label>
+      <label class="block text-sm text-slate-400">Essential expenses
+        <span class="text-xs text-slate-600 ml-1">(rent, food, bills)</span>
+        <input name="essential" type="number" min="0" value="{{ essential | default(40000) }}"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+      </label>
+      <label class="block text-sm text-slate-400">Discretionary
+        <span class="text-xs text-slate-600 ml-1">(dining, travel, leisure)</span>
+        <input name="discretionary" type="number" min="0" value="{{ discretionary | default(10000) }}"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+      </label>
+      <label class="block text-sm text-slate-400">Existing EMIs
+        <span class="text-xs text-slate-600 ml-1">(home, car, personal)</span>
+        <input name="emi" type="number" min="0" value="{{ emi | default(0) }}"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+      </label>
+    </div>
+  </div>
+
+  {# Savings & profile #}
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+    <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-emerald-400">Savings &amp; profile</h2>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <label class="block text-sm text-slate-400">Current savings / lumpsum (₹)
+        <input name="lumpsum" type="number" min="0" value="{{ lumpsum | default(500000) }}"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+      </label>
+      <label class="block text-sm text-slate-400">Current age
+        <input name="current_age" type="number" min="18" max="80" value="{{ current_age | default(30) }}"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+      </label>
+      <label class="block text-sm text-slate-400">Retirement age
+        <input name="retirement_age" type="number" min="40" max="80" value="{{ retirement_age | default(60) }}"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+      </label>
+      <label class="block text-sm text-slate-400">Risk profile
+        <select name="risk" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white">
+          <option value="conservative" {% if risk == "conservative" %}selected{% endif %}>Conservative</option>
+          <option value="moderate" {% if not risk or risk == "moderate" %}selected{% endif %}>Moderate</option>
+          <option value="aggressive" {% if risk == "aggressive" %}selected{% endif %}>Aggressive</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <button type="submit" class="rounded-xl bg-emerald-500 px-8 py-3 font-semibold text-slate-950 hover:bg-emerald-400 transition text-sm">
+    Generate my plan →
+  </button>
+</form>
+
+{% if plan %}
+{# ═══════════════════════════════════════════ RESULTS ═══════════════════════════════════════════ #}
+
+{# ── Snapshot summary ── #}
+<div class="mt-12">
+  <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Your financial snapshot</h2>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="result-card">
+      <p class="result-label">Take-home income</p>
+      <p class="result-value text-white">₹ {{ "{:,.0f}".format(plan.monthly_income) }}</p>
+      <p class="mt-1 text-xs text-slate-500">per month</p>
+    </div>
+    <div class="result-card">
+      <p class="result-label">Total outflow</p>
+      <p class="result-value text-white">₹ {{ "{:,.0f}".format(plan.total_expenses) }}</p>
+      <p class="mt-1 text-xs text-slate-500">expenses + EMIs</p>
+    </div>
+    <div class="result-card {% if plan.monthly_surplus < 0 %}border-rose-600/40 bg-rose-950/20{% elif plan.monthly_surplus > 0 %}border-emerald-600/30 bg-emerald-950/20{% endif %}">
+      <p class="result-label">Monthly surplus</p>
+      <p class="result-value {% if plan.monthly_surplus < 0 %}text-rose-300{% else %}text-emerald-300{% endif %}">
+        {% if plan.monthly_surplus < 0 %}− {% endif %}₹ {{ "{:,.0f}".format(plan.monthly_surplus | abs) }}
+      </p>
+      <p class="mt-1 text-xs text-slate-500">available to invest</p>
+    </div>
+    <div class="result-card">
+      <p class="result-label">Savings rate</p>
+      <p class="result-value {% if plan.savings_rate >= 20 %}text-emerald-300{% elif plan.savings_rate >= 10 %}text-amber-300{% else %}text-rose-300{% endif %}">
+        {{ "{:.1f}".format(plan.savings_rate) }}%
+      </p>
+      <p class="mt-1 text-xs text-slate-500">of take-home</p>
+    </div>
+  </div>
+</div>
+
+{# ── Health indicators ── #}
+<div class="mt-8">
+  <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Health indicators</h2>
+  <div class="grid gap-4 sm:grid-cols-3">
+    {% for label, badge_label, color in [
+      ("Savings rate", plan.savings_health[1], plan.savings_health[2]),
+      ("Emergency fund", plan.em_health[1], plan.em_health[2]),
+      ("Debt / EMI load", plan.debt_health[1], plan.debt_health[2]),
+    ] %}
+    <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4 flex items-center gap-3">
+      <span class="inline-block h-2.5 w-2.5 rounded-full flex-shrink-0
+        {% if color == 'emerald' %}bg-emerald-400
+        {% elif color == 'amber' %}bg-amber-400
+        {% else %}bg-rose-400{% endif %}"></span>
+      <div>
+        <p class="text-xs text-slate-500 uppercase tracking-wide">{{ label }}</p>
+        <p class="text-sm font-medium text-slate-200 mt-0.5">{{ badge_label }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{# ── Emergency fund detail ── #}
+<div class="mt-8 rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
+  <h2 class="text-sm font-semibold text-white mb-3">Emergency fund</h2>
+  <div class="grid gap-4 sm:grid-cols-3 text-sm">
+    <div>
+      <p class="text-xs text-slate-500 uppercase tracking-wide">Target (6 months living)</p>
+      <p class="mt-1 font-semibold text-white">₹ {{ "{:,.0f}".format(plan.emergency_target) }}</p>
+    </div>
+    <div>
+      <p class="text-xs text-slate-500 uppercase tracking-wide">Currently covered</p>
+      <p class="mt-1 font-semibold {% if plan.em_health[0] == 'covered' %}text-emerald-300{% elif plan.em_health[0] == 'partial' %}text-amber-300{% else %}text-rose-300{% endif %}">
+        {{ "{:.1f}".format(plan.emergency_months_covered) }} months
+      </p>
+    </div>
+    <div>
+      <p class="text-xs text-slate-500 uppercase tracking-wide">Remaining gap</p>
+      <p class="mt-1 font-semibold {% if plan.emergency_gap <= 0 %}text-emerald-300{% else %}text-amber-300{% endif %}">
+        {% if plan.emergency_gap <= 0 %}None — fully funded{% else %}₹ {{ "{:,.0f}".format(plan.emergency_gap) }}{% endif %}
+      </p>
+    </div>
+  </div>
+  {% if plan.emergency_gap > 0 %}
+  <p class="mt-3 text-xs text-slate-500">
+    Suggestion: keep ₹ {{ "{:,.0f}".format(plan.emergency_gap) }} in a liquid fund or savings account before deploying rest for long-term investment.
+  </p>
+  {% endif %}
+</div>
+
+{# ── Cashflow chart ── #}
+{{ ch.render_chart('plan-cashflow', chart_cashflow) }}
+
+{# ── Monthly SIP plan ── #}
+{% if plan.monthly_investable > 0 %}
+<div class="mt-10">
+  <div class="flex items-baseline justify-between mb-4">
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Where your monthly surplus goes</h2>
+    <span class="text-sm font-semibold text-emerald-300">₹ {{ "{:,.0f}".format(plan.monthly_investable) }} / month</span>
+  </div>
+  <div class="overflow-x-auto rounded-2xl border border-slate-800">
+    <table class="min-w-full text-sm">
+      <thead class="bg-slate-900/80 text-left">
+        <tr>
+          <th class="px-4 py-3 text-xs text-slate-400 font-medium">Asset / bucket</th>
+          <th class="px-4 py-3 text-xs text-slate-400 font-medium text-right">Split</th>
+          <th class="px-4 py-3 text-xs text-slate-400 font-medium text-right">Monthly SIP (₹)</th>
+          <th class="px-4 py-3 text-xs text-slate-400 font-medium text-right">Assumed return</th>
+          <th class="px-4 py-3 text-xs text-slate-400 font-medium text-right">Corpus from SIP</th>
+          <th class="px-4 py-3 text-xs text-slate-400 font-medium text-right">Total corpus</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-800/70 bg-slate-950/40">
+        {% for r in plan.sip_rows %}
+        <tr class="hover:bg-slate-900/50 transition">
+          <td class="px-4 py-3 font-medium text-slate-200">{{ r.category }}</td>
+          <td class="px-4 py-3 text-right text-slate-400">{{ r.pct }}%</td>
+          <td class="px-4 py-3 text-right text-emerald-300 font-semibold">₹ {{ "{:,.0f}".format(r.monthly_sip) }}</td>
+          <td class="px-4 py-3 text-right text-slate-400">{{ r.assumed_return }}%</td>
+          <td class="px-4 py-3 text-right text-slate-300">₹ {{ "{:,.0f}".format(r.fv_sip) }}</td>
+          <td class="px-4 py-3 text-right font-semibold text-white">₹ {{ "{:,.0f}".format(r.fv_total) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="bg-slate-900/60 border-t border-slate-700">
+        <tr>
+          <td class="px-4 py-3 font-semibold text-white" colspan="5">Total projected corpus at retirement (age {{ plan.retirement_age | default(60) }})</td>
+          <td class="px-4 py-3 text-right text-2xl font-bold text-emerald-300">₹ {{ "{:,.0f}".format(plan.total_corpus) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <p class="mt-2 text-xs text-slate-600">
+    In crores: <span class="text-slate-500">{{ "{:.2f}".format(plan.total_corpus / 10000000) }} cr</span> ·
+    Investment horizon: {{ plan.years }} years · Risk profile: {{ plan.risk_profile | capitalize }}
+  </p>
+</div>
+
+{# ── Allocation donut ── #}
+<div class="mt-8 grid gap-6 lg:grid-cols-2">
+  <div>
+    <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Monthly SIP allocation</h3>
+    {{ ch.render_chart('plan-alloc', chart_alloc) }}
+  </div>
+  <div>
+    <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Projected corpus at retirement by bucket</h3>
+    {{ ch.render_chart('plan-corpus', chart_corpus) }}
+  </div>
+</div>
+
+{% elif plan.monthly_surplus <= 0 %}
+<div class="mt-8 rounded-2xl border border-rose-600/30 bg-rose-950/20 p-6">
+  <p class="text-sm font-semibold text-rose-300">Expenses exceed income — no investable surplus</p>
+  <p class="mt-1 text-xs text-slate-400">Reduce discretionary spending or EMI obligations to free up a monthly surplus for investing.</p>
+</div>
+{% else %}
+<div class="mt-8 rounded-2xl border border-amber-600/30 bg-amber-950/20 p-6">
+  <p class="text-sm font-semibold text-amber-300">Very small surplus — focus on building it first</p>
+  <p class="mt-1 text-xs text-slate-400">Even ₹500/month in a SIP compounds over time. Start small and increase with each salary hike.</p>
+</div>
+{% endif %}
+
+{# ── Lumpsum ── #}
+{% if plan.investable_lumpsum > 0 %}
+<div class="mt-10">
+  <div class="flex items-baseline justify-between mb-4">
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Lumpsum to deploy now</h2>
+    <span class="text-sm font-semibold text-sky-300">₹ {{ "{:,.0f}".format(plan.investable_lumpsum) }}</span>
+  </div>
+  <p class="text-xs text-slate-500 mb-4">After keeping ₹ {{ "{:,.0f}".format(plan.emergency_target) }} as emergency fund, this is available to invest immediately in the same proportions as your SIP.</p>
+  <div class="overflow-x-auto rounded-2xl border border-slate-800">
+    <table class="min-w-full text-sm">
+      <thead class="bg-slate-900/80 text-left">
+        <tr>
+          <th class="px-4 py-3 text-xs text-slate-400 font-medium">Asset / bucket</th>
+          <th class="px-4 py-3 text-xs text-slate-400 font-medium text-right">Split</th>
+          <th class="px-4 py-3 text-xs text-slate-400 font-medium text-right">Deploy now (₹)</th>
+          <th class="px-4 py-3 text-xs text-slate-400 font-medium text-right">Grows to at retirement</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-800/70 bg-slate-950/40">
+        {% for r in plan.sip_rows %}
+        {% if r.lump_deploy > 0 %}
+        <tr class="hover:bg-slate-900/50 transition">
+          <td class="px-4 py-3 font-medium text-slate-200">{{ r.category }}</td>
+          <td class="px-4 py-3 text-right text-slate-400">{{ r.pct }}%</td>
+          <td class="px-4 py-3 text-right text-sky-300 font-semibold">₹ {{ "{:,.0f}".format(r.lump_deploy) }}</td>
+          <td class="px-4 py-3 text-right font-semibold text-white">₹ {{ "{:,.0f}".format(r.fv_lump) }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% elif plan.investable_lumpsum == 0 and plan.emergency_gap > 0 %}
+<div class="mt-8 rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
+  <p class="text-sm text-slate-400">Your lumpsum of ₹ {{ "{:,.0f}".format(lumpsum | float | default(0)) }} is being used toward the emergency fund target. Once the emergency fund is fully funded, any additional savings can be deployed as a lumpsum investment.</p>
+</div>
+{% endif %}
+
+{% endif %}{# end if plan #}
+{% endblock %}

@@ -592,3 +592,115 @@ def real_return_bar(nominal: float, inflation: float, real_pct: float) -> str | 
         "options": _dark_options(y_title="Percent", legend=False),
     }
     return dumps_chart(cfg)
+
+
+# ── Financial Planner ────────────────────────────────────────────────────────
+
+_PALETTE = [
+    "rgba(52,211,153,0.80)",   # emerald
+    "rgba(56,189,248,0.75)",   # sky
+    "rgba(167,139,250,0.75)",  # violet
+    "rgba(251,191,36,0.75)",   # amber
+    "rgba(148,163,184,0.55)",  # slate
+]
+
+
+def planner_allocation_doughnut(sip_rows: list[dict]) -> str | None:
+    """Doughnut of monthly SIP allocation by category."""
+    if not sip_rows:
+        return None
+    labels = [r["category"] for r in sip_rows]
+    data = [r["monthly_sip"] for r in sip_rows]
+    if sum(data) < 1:
+        return None
+    cfg = {
+        "type": "doughnut",
+        "data": {
+            "labels": labels,
+            "datasets": [{
+                "data": data,
+                "backgroundColor": _PALETTE[:len(labels)],
+                "borderColor": "#0f172a",
+                "borderWidth": 2,
+            }],
+        },
+        "options": {
+            "responsive": True,
+            "maintainAspectRatio": False,
+            "plugins": {
+                "legend": {"display": True, "position": "right", "labels": {"color": "#cbd5e1", "padding": 12}},
+                "tooltip": {
+                    "titleColor": "#f8fafc",
+                    "bodyColor": "#e2e8f0",
+                    "backgroundColor": "#0f172a",
+                    "borderColor": "#334155",
+                    "borderWidth": 1,
+                    "callbacks": {
+                        "label": "function(c){return ' ₹'+c.parsed.toLocaleString('en-IN')}"
+                    },
+                },
+            },
+            "cutout": "62%",
+        },
+    }
+    return dumps_chart(cfg)
+
+
+def planner_corpus_chart(sip_rows: list[dict]) -> str | None:
+    """Horizontal bar chart of projected corpus per category at retirement."""
+    if not sip_rows:
+        return None
+    rows = sorted(sip_rows, key=lambda r: r["fv_total"], reverse=True)
+    labels = [r["category"] for r in rows]
+    fv_sip = [r["fv_sip"] for r in rows]
+    fv_lump = [r["fv_lump"] for r in rows]
+    opts = _dark_options(x_title="₹ at retirement", legend=True)
+    opts["indexAxis"] = "y"
+    opts["scales"]["x"]["ticks"]["callback"] = "function(v){return '₹'+Math.round(v/100000)/10+'L'}"
+    cfg = {
+        "type": "bar",
+        "data": {
+            "labels": labels,
+            "datasets": [
+                {
+                    "label": "From monthly SIP",
+                    "data": fv_sip,
+                    "backgroundColor": "rgba(52,211,153,0.70)",
+                },
+                {
+                    "label": "From lumpsum",
+                    "data": fv_lump,
+                    "backgroundColor": "rgba(56,189,248,0.60)",
+                },
+            ],
+        },
+        "options": {**opts, "plugins": {**opts["plugins"], "legend": {"display": True, "labels": {"color": "#cbd5e1"}}}},
+    }
+    return dumps_chart(cfg)
+
+
+def planner_cashflow_chart(income: float, essential: float, discretionary: float, emi: float, surplus: float) -> str | None:
+    """Stacked bar showing income breakdown."""
+    if income <= 0:
+        return None
+    cfg = {
+        "type": "bar",
+        "data": {
+            "labels": ["Monthly cashflow"],
+            "datasets": [
+                {"label": "Essential expenses", "data": [essential], "backgroundColor": "rgba(251,113,133,0.70)"},
+                {"label": "Discretionary", "data": [discretionary], "backgroundColor": "rgba(251,191,36,0.65)"},
+                {"label": "EMI outgo", "data": [emi], "backgroundColor": "rgba(148,163,184,0.55)"},
+                {"label": "Investable surplus", "data": [max(0.0, surplus)], "backgroundColor": "rgba(52,211,153,0.75)"},
+            ],
+        },
+        "options": {
+            **_dark_options(y_title="₹ / month", legend=True),
+            "scales": {
+                "x": {"stacked": True, "ticks": {"color": _SLATE}, "grid": {"color": _GRID}},
+                "y": {"stacked": True, "ticks": {"color": _SLATE}, "grid": {"color": _GRID},
+                      "title": {"display": True, "text": "₹ / month", "color": _SLATE}},
+            },
+        },
+    }
+    return dumps_chart(cfg)

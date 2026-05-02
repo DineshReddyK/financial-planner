@@ -1,32 +1,64 @@
 {% extends "base.html" %}
 {% import '_charts_macros.html' as ch %}
 {% block content %}
+<a href="/" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-400 transition mb-6">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+  All tools
+</a>
 <h1 class="text-2xl font-bold text-white">FD vs liquid MF vs savings</h1>
 <div class="mt-3 max-w-3xl space-y-2 text-sm leading-relaxed text-slate-400">
-  <p>For a short horizon, compare estimated after-tax outcomes from three choices: fixed deposit (interest taxed at slab), mutual fund growth (short-term gains at slab if under 12 months, else long-term rules with exemption band), and simple savings interest.</p>
-  <p>Winner is illustrative — real products, fees, and tax reporting can differ.</p>
+  <p>For a short-horizon lump sum, compare after-tax outcomes across three options: fixed deposit (interest taxed at slab), a growth mutual fund (STCG at slab rate if &lt;12 months; else LTCG at 12.5% above ₹1.25L), and a plain savings account (simple interest, taxed at slab).</p>
+  <p>Winner is illustrative — real products, lock-in periods, exit loads, and tax filing differ.</p>
 </div>
 
 <form method="post" class="mt-8 grid gap-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:grid-cols-2 lg:grid-cols-3">
-  <label class="block text-sm text-slate-400">Principal (₹)<input type="number" name="principal" value="{{ principal | default(1000000) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" /></label>
-  <label class="block text-sm text-slate-400">Months<input type="number" name="months" value="{{ months | default(12) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" /></label>
-  <label class="block text-sm text-slate-400">Tax slab %<input type="number" name="tax_slab" value="{{ tax_slab | default(30) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" /></label>
-  <label class="block text-sm text-slate-400">FD rate %<input type="number" step="0.01" name="fd_rate" value="{{ fd_rate | default(6) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" /></label>
-  <label class="block text-sm text-slate-400">MF CAGR %<input type="number" step="0.01" name="mf_cagr" value="{{ mf_cagr | default(5) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" /></label>
-  <label class="block text-sm text-slate-400">Savings rate % (simple)<input type="number" step="0.01" name="savings_rate" value="{{ savings_rate | default(4.5) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" /></label>
-  <div class="flex items-end"><button type="submit" class="w-full rounded-xl bg-emerald-500 py-2.5 font-semibold text-slate-950 hover:bg-emerald-400">Compare</button></div>
+  <label class="block text-sm text-slate-400">Principal (₹)
+    <input type="number" min="0" name="principal" value="{{ principal | default(1000000) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <label class="block text-sm text-slate-400">Duration (months)
+    <input type="number" min="1" name="months" value="{{ months | default(12) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <label class="block text-sm text-slate-400">Your tax slab %
+    <input type="number" step="0.1" min="0" max="42.74" name="tax_slab" value="{{ tax_slab | default(30) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <label class="block text-sm text-slate-400">FD rate % p.a.
+    <input type="number" step="0.01" min="0" name="fd_rate" value="{{ fd_rate | default(6) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <label class="block text-sm text-slate-400">MF expected CAGR %
+    <input type="number" step="0.01" min="0" name="mf_cagr" value="{{ mf_cagr | default(5) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <label class="block text-sm text-slate-400">Savings rate % (simple interest)
+    <input type="number" step="0.01" min="0" name="savings_rate" value="{{ savings_rate | default(4.5) }}"
+      class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+  </label>
+  <div class="flex items-end sm:col-span-2 lg:col-span-1">
+    <button type="submit" class="w-full rounded-xl bg-emerald-500 py-2.5 font-semibold text-slate-950 hover:bg-emerald-400 transition">Compare</button>
+  </div>
 </form>
 
 {% if cmp %}
-<div class="mt-10 grid gap-6 lg:grid-cols-3">
-  <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-5"><h3 class="font-semibold text-white">FD</h3><p class="mt-2 text-sm text-slate-400">Net ₹ {{ "{:,.0f}".format(cmp.fd.net_interest) }}</p><p class="text-emerald-300">{{ "{:.2f}".format(cmp.fd.profit_pct) }}%</p></div>
-  <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-5"><h3 class="font-semibold text-white">MF</h3><p class="mt-2 text-sm text-slate-400">Net ₹ {{ "{:,.0f}".format(cmp.mf.net_returns) }}</p><p class="text-emerald-300">{{ "{:.2f}".format(cmp.mf.profit_pct) }}%</p></div>
-  <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-5"><h3 class="font-semibold text-white">Savings</h3><p class="mt-2 text-sm text-slate-400">Net ₹ {{ "{:,.0f}".format(cmp.savings.net_interest) }}</p><p class="text-emerald-300">{{ "{:.2f}".format(cmp.savings.profit_pct) }}%</p></div>
+{% set names = {"fd": "Fixed deposit", "mf": "Growth MF", "savings": "Savings account"} %}
+<div class="mt-10 grid gap-4 lg:grid-cols-3">
+  {% for key, label, net, pct in [
+    ("fd", "Fixed deposit", cmp.fd.net_interest, cmp.fd.profit_pct),
+    ("mf", "Growth MF", cmp.mf.net_returns, cmp.mf.profit_pct),
+    ("savings", "Savings account", cmp.savings.net_interest, cmp.savings.profit_pct),
+  ] %}
+  <div class="rounded-2xl border {% if cmp.winner == key %}border-emerald-500/50 bg-emerald-950/20 ring-1 ring-emerald-500/20{% else %}border-slate-800 bg-slate-900/50{% endif %} p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-semibold text-white">{{ label }}</h3>
+      {% if cmp.winner == key %}<span class="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-300">Winner</span>{% endif %}
+    </div>
+    <p class="text-2xl font-bold {% if cmp.winner == key %}text-emerald-300{% else %}text-white{% endif %}">₹ {{ "{:,.0f}".format(net) }}</p>
+    <p class="text-sm text-slate-400 mt-0.5">net gain · {{ "{:.2f}".format(pct) }}% on principal</p>
+  </div>
+  {% endfor %}
 </div>
-<p class="mt-6 text-center text-lg font-semibold text-emerald-300">
-  Winner:
-  {% if cmp.winner == "fd" %}Fixed deposit{% elif cmp.winner == "mf" %}Growth mutual fund{% else %}Savings account{% endif %}
-</p>
 {{ ch.render_chart('fdmf-chart', chart_json) }}
 {% endif %}
 {% endblock %}

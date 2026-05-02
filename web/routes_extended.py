@@ -14,6 +14,7 @@ from planner_core.extended import (
     education_goal_sip,
     emergency_fund_plan,
     epf_projected_corpus,
+    full_financial_plan,
     fv_of_sip,
     monte_carlo_retirement_corpus,
     nps_projected_corpus,
@@ -31,6 +32,9 @@ from web.chart_helpers import (
     emergency_chart,
     monte_carlo_band_chart,
     personal_loan_interest_chart,
+    planner_allocation_doughnut,
+    planner_cashflow_chart,
+    planner_corpus_chart,
     real_return_bar,
     rent_buy_chart,
     retirement_three_pillar_chart,
@@ -258,6 +262,43 @@ async def mc_post(request: Request):
     )
     ch = monte_carlo_band_chart(mc)
     return _form(request, "monte_carlo.html", {**f, "mc": mc, "chart_json": ch})
+
+
+@router.get("/planner", response_class=HTMLResponse)
+async def planner_get(request: Request):
+    return _form(request, "planner.html", {"plan": None, "title": "Financial Planner"})
+
+
+@router.post("/planner", response_class=HTMLResponse)
+async def planner_post(request: Request):
+    f = dict(await request.form())
+    plan = full_financial_plan(
+        monthly_income=float(f.get("income", 0)),
+        monthly_essential=float(f.get("essential", 0)),
+        monthly_discretionary=float(f.get("discretionary", 0)),
+        monthly_emi_outgo=float(f.get("emi", 0)),
+        current_lumpsum=float(f.get("lumpsum", 0)),
+        current_age=int(float(f.get("current_age", 30))),
+        retirement_age=int(float(f.get("retirement_age", 60))),
+        risk_profile=f.get("risk", "moderate"),
+    )
+    ch_flow = planner_cashflow_chart(
+        plan["monthly_income"],
+        plan["monthly_essential"],
+        plan["monthly_discretionary"],
+        plan["monthly_emi_outgo"],
+        plan["monthly_surplus"],
+    )
+    ch_alloc = planner_allocation_doughnut(plan["sip_rows"])
+    ch_corpus = planner_corpus_chart(plan["sip_rows"])
+    return _form(request, "planner.html", {
+        **f,
+        "plan": plan,
+        "title": "Financial Planner",
+        "chart_cashflow": ch_flow,
+        "chart_alloc": ch_alloc,
+        "chart_corpus": ch_corpus,
+    })
 
 
 # --- JSON ---

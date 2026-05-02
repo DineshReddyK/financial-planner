@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% import '_charts_macros.html' as ch %}
 {% block content %}
+<a href="/" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-400 transition mb-6">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+  All tools
+</a>
 <h1 class="text-2xl font-bold text-white">SIP goal planner</h1>
 <div class="mt-3 max-w-3xl space-y-2 text-sm leading-relaxed text-slate-400">
   <p>Tell us your target amount, how many months you have, expected return, and any lump sum today — we solve for the steady monthly SIP needed to get there.</p>
@@ -20,9 +24,25 @@
   <button type="submit" class="rounded-xl bg-emerald-500 px-6 py-2.5 font-semibold text-slate-950 hover:bg-emerald-400">Calculate</button>
 </form>
 {% if sip %}
-<div class="mt-8 grid gap-4 sm:grid-cols-2">
-  <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4"><p class="text-xs text-emerald-200/80">Required SIP</p><p class="text-2xl font-bold text-emerald-300">₹ {{ "{:,.0f}".format(sip.monthly_sip) }}</p></div>
-  <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4"><p class="text-xs text-slate-500">Projected corpus (your SIP)</p><p class="text-2xl font-bold text-white">₹ {{ "{:,.0f}".format(fv_proj) }}</p></div>
+<div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  <div class="result-card border-emerald-600/40 bg-emerald-950/20">
+    <p class="result-label">Monthly SIP required</p>
+    <p class="result-value text-emerald-300">₹ {{ "{:,.0f}".format(sip.monthly_sip) }}</p>
+    {% if sip.fv_from_lump > 0 %}<p class="mt-1 text-xs text-slate-500">lump sum grows to ₹ {{ "{:,.0f}".format(sip.fv_from_lump) }}, covering ₹ {{ "{:,.0f}".format(sip.gap | round | int) }} gap</p>{% endif %}
+  </div>
+  <div class="result-card">
+    <p class="result-label">Your SIP projected corpus</p>
+    <p class="result-value text-white">₹ {{ "{:,.0f}".format(fv_proj) }}</p>
+    <p class="mt-1 text-xs text-slate-500">with step-up over {{ months | int | default(120) }} months</p>
+  </div>
+  <div class="result-card">
+    <p class="result-label">Difference</p>
+    {% set diff = fv_proj - (target | float | default(5000000)) %}
+    <p class="result-value {% if diff >= 0 %}text-emerald-300{% else %}text-rose-300{% endif %}">
+      {% if diff >= 0 %}+{% endif %}₹ {{ "{:,.0f}".format(diff | abs) }}
+    </p>
+    <p class="mt-1 text-xs text-slate-500">vs ₹ {{ "{:,.0f}".format(target | float | default(5000000)) }} target</p>
+  </div>
 </div>
 {{ ch.render_chart('sip-goal-chart', chart_json) }}
 {% endif %}

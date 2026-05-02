@@ -1,47 +1,110 @@
 {% extends "base.html" %}
 {% import '_charts_macros.html' as ch %}
 {% block content %}
+<a href="/" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-400 transition mb-6">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+  All tools
+</a>
 <h1 class="text-2xl font-bold text-white">EPF · NPS · PPF</h1>
 <div class="mt-3 max-w-3xl space-y-2 text-sm leading-relaxed text-slate-400">
-  <p>Three separate illustrations: EPF-style corpus from balance plus employee/employer flows and optional salary growth; NPS from monthly contribution, years, return, and expense ratio; PPF from yearly deposits with a cap similar to real rules.</p>
-  <p>Outputs depend entirely on the rates and assumptions you type — they are not official projections from EPFO, NPS trustees, or banks.</p>
+  <p>Three common India retirement pillars in one view. Fill in all three sections and hit "Project all" to compare projected corpus side by side.</p>
+  <p>These are illustrations only — outputs depend on the rates you enter. EPF current rate is 8.25%; PPF rate is 7.1% (FY25); NPS depends on fund allocation.</p>
 </div>
-<form method="post" class="mt-6 space-y-8">
-  <section>
-    <h2 class="text-lg font-semibold text-emerald-300">EPF</h2>
-    <div class="mt-3 grid gap-3 sm:grid-cols-3">
-      <label class="text-xs text-slate-400">Balance (₹)<input name="epf_sb" value="{{ epf_sb | default(500000) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
-      <label class="text-xs text-slate-400">Employee/mo (₹)<input name="epf_ee" value="{{ epf_ee | default(18000) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
-      <label class="text-xs text-slate-400">Employer/mo (₹)<input name="epf_er" value="{{ epf_er | default(18000) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
-      <label class="text-xs text-slate-400">Yield %<input name="epf_i" value="{{ epf_i | default(8.25) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
-      <label class="text-xs text-slate-400">Years<input name="epf_y" value="{{ epf_y | default(15) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
-      <label class="text-xs text-slate-400">Salary growth %<input name="epf_sg" value="{{ epf_sg | default(8) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
+
+<form method="post" class="mt-8 space-y-6">
+  <section class="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
+    <h2 class="text-base font-semibold text-emerald-300">EPF</h2>
+    <p class="text-xs text-slate-500 mt-0.5 mb-4">Employee Provident Fund — yearly compounding on opening balance plus monthly flows.</p>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <label class="block text-xs text-slate-400">Current balance (₹)
+        <input name="epf_sb" type="number" min="0" value="{{ epf_sb | default(500000) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
+      <label class="block text-xs text-slate-400">Employee contrib / mo (₹)
+        <input name="epf_ee" type="number" min="0" value="{{ epf_ee | default(18000) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
+      <label class="block text-xs text-slate-400">Employer contrib / mo (₹)
+        <input name="epf_er" type="number" min="0" value="{{ epf_er | default(18000) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
+      <label class="block text-xs text-slate-400">Annual yield %
+        <input name="epf_i" type="number" step="0.01" min="0" value="{{ epf_i | default(8.25) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
+      <label class="block text-xs text-slate-400">Years to model
+        <input name="epf_y" type="number" min="1" value="{{ epf_y | default(15) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
+      <label class="block text-xs text-slate-400">Salary growth % p.a.
+        <input name="epf_sg" type="number" step="0.1" min="0" value="{{ epf_sg | default(8) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
     </div>
   </section>
-  <section>
-    <h2 class="text-lg font-semibold text-emerald-300">NPS</h2>
-    <div class="mt-3 grid gap-3 sm:grid-cols-3">
-      <label class="text-xs text-slate-400">Monthly (₹)<input name="nps_m" value="{{ nps_m | default(15000) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
-      <label class="text-xs text-slate-400">Years<input name="nps_y" value="{{ nps_y | default(25) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
-      <label class="text-xs text-slate-400">Return % p.a.<input name="nps_r" value="{{ nps_r | default(10) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
-      <label class="text-xs text-slate-400">Expense ratio %<input name="nps_e" value="{{ nps_e | default(0.09) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
+
+  <section class="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
+    <h2 class="text-base font-semibold text-emerald-300">NPS</h2>
+    <p class="text-xs text-slate-500 mt-0.5 mb-4">National Pension System — net return after expense ratio, monthly contributions at end of month.</p>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <label class="block text-xs text-slate-400">Monthly contribution (₹)
+        <input name="nps_m" type="number" min="0" value="{{ nps_m | default(15000) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
+      <label class="block text-xs text-slate-400">Years
+        <input name="nps_y" type="number" min="1" value="{{ nps_y | default(25) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
+      <label class="block text-xs text-slate-400">Expected return % p.a.
+        <input name="nps_r" type="number" step="0.1" min="0" value="{{ nps_r | default(10) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
+      <label class="block text-xs text-slate-400">Expense ratio %
+        <input name="nps_e" type="number" step="0.01" min="0" value="{{ nps_e | default(0.09) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
     </div>
   </section>
-  <section>
-    <h2 class="text-lg font-semibold text-emerald-300">PPF</h2>
-    <div class="mt-3 grid gap-3 sm:grid-cols-3">
-      <label class="text-xs text-slate-400">Yearly dep. (₹)<input name="ppf_yd" value="{{ ppf_yd | default(150000) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
-      <label class="text-xs text-slate-400">Rate %<input name="ppf_r" value="{{ ppf_r | default(7.1) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
-      <label class="text-xs text-slate-400">Years<input name="ppf_y" value="{{ ppf_y | default(15) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
+
+  <section class="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
+    <h2 class="text-base font-semibold text-emerald-300">PPF</h2>
+    <p class="text-xs text-slate-500 mt-0.5 mb-4">Public Provident Fund — yearly deposit capped at ₹1.5L, compounding from start of year.</p>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <label class="block text-xs text-slate-400">Yearly deposit (₹, max ₹1.5L)
+        <input name="ppf_yd" type="number" min="500" max="150000" value="{{ ppf_yd | default(150000) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
+      <label class="block text-xs text-slate-400">Rate %
+        <input name="ppf_r" type="number" step="0.01" min="0" value="{{ ppf_r | default(7.1) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
+      <label class="block text-xs text-slate-400">Years (min 15)
+        <input name="ppf_y" type="number" min="15" value="{{ ppf_y | default(15) }}"
+          class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-white" />
+      </label>
     </div>
   </section>
-  <button type="submit" class="rounded-xl bg-emerald-500 px-6 py-2.5 font-semibold text-slate-950">Project all</button>
+
+  <button type="submit" class="rounded-xl bg-emerald-500 px-6 py-2.5 font-semibold text-slate-950 hover:bg-emerald-400 transition">Project all three</button>
 </form>
+
 {% if epf %}
-<div class="mt-8 grid gap-3 text-sm md:grid-cols-3">
-  <p class="rounded-lg border border-slate-800 bg-slate-900/60 p-3">EPF ≈ ₹ {{ "{:,.0f}".format(epf.corpus) }}</p>
-  <p class="rounded-lg border border-slate-800 bg-slate-900/60 p-3">NPS ≈ ₹ {{ "{:,.0f}".format(nps.corpus) }}</p>
-  <p class="rounded-lg border border-slate-800 bg-slate-900/60 p-3">PPF ≈ ₹ {{ "{:,.0f}".format(ppf.corpus) }}</p>
+<div class="mt-10 grid gap-4 md:grid-cols-3">
+  <div class="result-card border-l-2 border-l-sky-500">
+    <p class="result-label">EPF corpus</p>
+    <p class="result-value text-sky-300">₹ {{ "{:,.0f}".format(epf.corpus) }}</p>
+    <p class="mt-1 text-xs text-slate-500">after {{ epf.years_modeled }} years</p>
+  </div>
+  <div class="result-card border-l-2 border-l-violet-500">
+    <p class="result-label">NPS corpus</p>
+    <p class="result-value text-violet-300">₹ {{ "{:,.0f}".format(nps.corpus) }}</p>
+    <p class="mt-1 text-xs text-slate-500">gain ₹ {{ "{:,.0f}".format(nps.gain) }} · contributed ₹ {{ "{:,.0f}".format(nps.total_contributed) }}</p>
+  </div>
+  <div class="result-card border-l-2 border-l-amber-500">
+    <p class="result-label">PPF corpus</p>
+    <p class="result-value text-amber-300">₹ {{ "{:,.0f}".format(ppf.corpus) }}</p>
+    <p class="mt-1 text-xs text-slate-500">interest ₹ {{ "{:,.0f}".format(ppf.interest_earned) }} · deposited ₹ {{ "{:,.0f}".format(ppf.total_deposited) }}</p>
+  </div>
 </div>
 {{ ch.render_chart('retire-chart', chart_json) }}
 {% endif %}
