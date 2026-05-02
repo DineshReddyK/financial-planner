@@ -1,9 +1,13 @@
 # Render Blueprint: https://render.com/docs/blueprint-spec
 # After pushing this file, use Dashboard → New → Blueprint → select this repo.
 
+# Service name becomes https://<name>.onrender.com (globally unique).
+# If Render adds a random suffix (e.g. financial-planner-abc1), pick a more unique name
+# in Dashboard → Settings → Name, or change `name` below and sync the Blueprint.
+
 services:
   - type: web
-    name: financial-planner
+    name: di-financial-planner
     runtime: docker
     plan: free
     region: oregon
