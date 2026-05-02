@@ -1,0 +1,17 @@
+{# Chart.js must load in <head> (base.html). Pass chart_json as JSON string from Python. #}
+{% macro render_chart(canvas_id, chart_json) -%}
+{% if chart_json %}
+<div class="mt-8 rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+  <div class="mx-auto h-72 w-full max-w-4xl"><canvas id="{{ canvas_id }}"></canvas></div>
+</div>
+<script>
+(function(){
+  try {
+    var el = document.getElementById('{{ canvas_id }}');
+    if (!el || typeof Chart === 'undefined') return;
+    new Chart(el, {{ chart_json | safe }});
+  } catch (e) { console.error(e); }
+})();
+</script>
+{% endif %}
+{%- endmacro %}

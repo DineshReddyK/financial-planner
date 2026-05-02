@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% import '_charts_macros.html' as ch %}
+{% block content %}
+<h1 class="text-2xl font-bold text-white">Education / wedding goal</h1>
+<div class="mt-3 max-w-3xl space-y-2 text-sm leading-relaxed text-slate-400">
+  <p>For a big expense years away: start from today’s cost, years to the goal, and education-style inflation to get a future lump sum you need to fund.</p>
+  <p>Then, given an investment return and anything you already saved, see the monthly SIP to reach that target.</p>
+</div>
+<form method="post" class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+  <label class="text-sm text-slate-400">Cost today (₹)<input name="today" value="{{ today | default(2500000) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+  <label class="text-sm text-slate-400">Years<input name="yrs" value="{{ yrs | default(10) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+  <label class="text-sm text-slate-400">Education inflation %<input name="einfl" value="{{ einfl | default(10) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+  <label class="text-sm text-slate-400">Investment return %<input name="inv_r" value="{{ inv_r | default(12) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+  <label class="text-sm text-slate-400">Saved now (₹)<input name="cur" value="{{ cur | default(200000) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+  <div class="flex items-end"><button class="rounded-xl bg-emerald-500 px-6 py-2.5 font-semibold text-slate-950">Calculate</button></div>
+</form>
+{% if eg %}
+<div class="mt-8 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6">
+  <p>Nominal goal ₹ {{ "{:,.0f}".format(eg.nominal_goal) }}</p>
+  <p class="mt-2 text-xl font-bold text-emerald-300">SIP ₹ {{ "{:,.0f}".format(eg.monthly_sip) }}/mo</p>
+</div>
+{{ ch.render_chart('edu-chart', chart_json) }}
+{% endif %}
+{% endblock %}

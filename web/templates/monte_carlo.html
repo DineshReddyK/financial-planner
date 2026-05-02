@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% import '_charts_macros.html' as ch %}
+{% block content %}
+<h1 class="text-2xl font-bold text-white">Monte Carlo</h1>
+<div class="mt-3 max-w-3xl space-y-2 text-sm leading-relaxed text-slate-400">
+  <p>Runs many random market paths with volatility, adds your starting corpus and monthly contributions, and shows how wide ending balances can be — median, mean, and weaker/stronger outcomes.</p>
+  <p>A simulation is not a forecast; higher volatility means more uncertainty, not a promise of any band.</p>
+</div>
+<form method="post" class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+  <label class="text-sm text-slate-400">Start corpus<input name="init" value="{{ init | default(500000) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+  <label class="text-sm text-slate-400">Monthly contrib.<input name="pm" value="{{ pm | default(25000) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+  <label class="text-sm text-slate-400">Months<input name="mo" value="{{ mo | default(240) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+  <label class="text-sm text-slate-400">Mean return %<input name="mu" value="{{ mu | default(11) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+  <label class="text-sm text-slate-400">Volatility %<input name="sig" value="{{ sig | default(15) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+  <label class="text-sm text-slate-400">Paths<input name="paths" value="{{ paths | default(800) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+  <label class="text-sm text-slate-400">Seed<input name="seed" value="{{ seed | default(42) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+  <div class="flex items-end"><button class="rounded-xl bg-emerald-500 px-6 py-2.5 font-semibold text-slate-950">Simulate</button></div>
+</form>
+{% if mc %}
+<div class="mt-8 grid gap-3 sm:grid-cols-3 text-sm">
+  <p class="rounded-lg border border-slate-800 p-3">Median ₹ {{ "{:,.0f}".format(mc.median) }}</p>
+  <p class="rounded-lg border border-slate-800 p-3">P10 ₹ {{ "{:,.0f}".format(mc.p10) }}</p>
+  <p class="rounded-lg border border-slate-800 p-3">P90 ₹ {{ "{:,.0f}".format(mc.p90) }}</p>
+</div>
+{{ ch.render_chart('mc-chart', chart_json) }}
+{% endif %}
+{% endblock %}

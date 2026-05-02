@@ -1,0 +1,11 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# After pushing this file, use Dashboard → New → Blueprint → select this repo.
+
+services:
+  - type: web
+    name: financial-planner
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /

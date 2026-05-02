@@ -1,0 +1,9 @@
+services:
+  web:
+    build: .
+    image: financial-planner:local
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    environment:
+      - HOST=0.0.0.0
+    command: ["uvicorn", "web.main:app", "--host", "0.0.0.0", "--port", "8080"]

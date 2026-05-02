@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="mb-12 text-center">
+  <p class="text-sm font-medium uppercase tracking-widest text-emerald-400/90">India-focused</p>
+  <h1 class="mt-3 text-5xl font-bold leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl lg:leading-[1.06]">Plan money without the spreadsheet pain</h1>
+  <p class="mx-auto mt-6 max-w-2xl text-base text-slate-400 sm:text-lg">Estimate SIPs, home loans, FDs, emergency buffers, rent versus buy, and long-term goals — pick a calculator below.</p>
+</section>
+
+<h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">Essential calculators</h2>
+<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-14">
+  {% for title, desc, href in [
+    ("Investment calculator", "Step-up contributions and inflation-adjusted outcomes toward retirement.", "/investment"),
+    ("Mortgage", "EMI, prepayments, and interest saved versus paying on schedule.", "/mortgage"),
+    ("Fixed deposit", "Maturity and tax on interest; estimated withholding called out separately.", "/fd"),
+    ("Payoff debt vs invest", "Compare loan interest with investing a lump sum and monthly amount.", "/payoff"),
+    ("FD vs mutual fund vs savings", "Short horizon, after-tax comparison.", "/fd-mf"),
+  ] %}
+  <a href="{{ href }}" class="group rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl ring-1 ring-white/5 transition hover:border-emerald-500/40">
+    <h3 class="text-lg font-semibold text-white group-hover:text-emerald-300">{{ title }}</h3>
+    <p class="mt-2 text-sm text-slate-400">{{ desc }}</p>
+    <span class="mt-4 inline-block text-sm font-medium text-emerald-400">Open →</span>
+  </a>
+  {% endfor %}
+</div>
+
+<h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">More planning tools</h2>
+<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-14">
+  {% for title, desc, href in [
+    ("SIP goal planner", "Set a target corpus and see the monthly savings needed.", "/sip-goal"),
+    ("Emergency fund", "How much to hold and how long to reach it.", "/emergency"),
+    ("Rent vs buy", "Simple side-by-side wealth outcome over your horizon.", "/rent-buy"),
+    ("EPF · NPS · PPF", "Illustrative balances for three common pillars.", "/retirement-accounts"),
+    ("High-interest debt", "Credit card payoff timeline versus a personal loan.", "/debt"),
+    ("Senior TDS · real return · SWP", "TDS thresholds, inflation-adjusted return, withdrawal runway.", "/utilities"),
+    ("Education or wedding goal", "Inflate the future cost, then solve for SIP.", "/education-goal"),
+    ("Risk simulator", "Many possible market paths — median and spread.", "/monte-carlo"),
+  ] %}
+  <a href="{{ href }}" class="group rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl ring-1 ring-white/5 transition hover:border-emerald-500/40">
+    <h3 class="text-lg font-semibold text-white group-hover:text-emerald-300">{{ title }}</h3>
+    <p class="mt-2 text-sm text-slate-400">{{ desc }}</p>
+    <span class="mt-4 inline-block text-sm font-medium text-emerald-400">Open →</span>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

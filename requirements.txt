@@ -1,5 +1,6 @@
-pandas
-streamlit
-matplotlib
+numpy
 numpy_financial
-
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart

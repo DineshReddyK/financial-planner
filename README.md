@@ -1,58 +1,113 @@
-# Financial Planner (for INDIAN citizens 🇮🇳)
+# Financial Planner (India)
 
-**Note**: I am not a financial advisor. This project is inspired by multiple financial advisors and their calculators.
+**Disclaimer:** For education only — not financial, tax, or legal advice. Tax slabs and instrument rules are simplified; confirm with a CA or RBI/IT notifications.
 
-## Overview
-Welcome to the Financial Planner! This repository contains a suite of financial tools developed in pure Python, designed to help you make informed financial decisions. Whether you're planning for retirement, managing your mortgage, or deciding between different investment options, these tools have got you covered.
+## What this is
 
-#### Deployed and Hosted on streamlit - [di-financial-planner](https://di-financial-planner.streamlit.app/)
+A **Python** toolkit for back-of-the-envelope planning:
 
-<br>
+- Shared math in [`planner_core/`](planner_core/) (`services.py` + `extended.py`)
+- **FastAPI** + Jinja + Tailwind UI: [`web/`](web/) (OpenAPI at `/docs`)
 
-![finplan](./assets/fin-plan-portfolio.png)
+![finplan](./assets/fin-plan-portfolio.png)  
+*(Add your screenshot under `assets/` if the file is missing.)*
 
+---
 
-## Tools
-### Investment Calculator
-The Investment Calculator provides a glimpse of potential returns you can achieve after retirement by making investments in various categories. It helps you compare different investment options and choose the one that aligns best with your financial goals.
+## Calculators (web)
 
-### Mortgage Calculator
-The Mortgage Calculator is a simple loan repayment calculator that includes monthly, yearly, and one-time prepayment calculations. It gives you a clear picture of how much you can save by making prepayments on your loan, helping you manage your debt more efficiently.
+| Tool | What it does |
+|------|----------------|
+| Investment calculator | Step-up SIP scenarios; inflation-adjusted “today’s money” |
+| Mortgage | EMI, prepayments, interest saved vs no-prepay baseline |
+| FD | Monthly compounding; **slab tax**; TDS shown as info (not double-counted) |
+| Payoff or invest | Remaining loan interest vs lump + SIP FV (heuristic) |
+| FD or MF | FD vs liquid MF vs savings, after tax |
+| SIP goal planner | Target → required constant SIP; FV with yearly step-up |
+| Emergency fund | Target corpus from months of expenses; months to close gap |
+| Rent vs buy | Month-level toy model: terminal net worth renter vs buyer |
+| EPF · NPS · PPF | Coarse projections (not employer-specific rules) |
+| Debt payoff | Credit card months-to-clear vs personal-loan EMI |
+| Senior TDS · SWP · Real return | Interest TDS threshold note, Fisher real return, SWP runway |
+| Education / wedding goal | Inflate goal cost, then SIP |
+| Monte Carlo | Lognormal monthly returns; median & p10–p90 |
 
-### FD Calculator
-The FD (Fixed Deposit) Calculator not only computes the interest earned on your fixed deposit but also includes TDS (Tax Deducted at Source) and other tax implications. This tool helps you understand the true value of your FD investments after accounting for taxes.
+**JSON API (examples):** `POST /api/investment`, `/api/mortgage`, `/api/fd`, `/api/sip-goal`, `/api/emergency-fund`, `/api/monte-carlo` — see **`/docs`**.
 
-### Payoff the Loan or Invest
-This tool helps you decide whether to use your available funds to pay off an existing loan or to invest the money for greater returns. It provides a comparative analysis to aid you in making the best financial decision based on your circumstances.
+---
 
-### Invest in FD or Mutual Funds
-Unsure whether to invest your lump sum in a Fixed Deposit or Mutual Funds? This tool helps you providing a clear comparison to guide your investment decisions.
+## Quick start (local)
 
-### Financial Planner
-The Financial Planner is your complete guide to financial planning. It integrates all the tools mentioned above to provide you with a comprehensive financial strategy, helping you achieve your long-term financial goals.
+```bash
+git clone https://github.com/DineshReddyK/financial-planner.git
+cd financial-planner
+./scripts/deploy.sh install
+./scripts/deploy.sh dev-web     # http://127.0.0.1:8080  (auto-reload)
+```
 
+Manual equivalent:
 
-## Getting Started
-To get started with the Financial Planner tools, follow these steps:
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/uvicorn web.main:app --app-dir . --host 0.0.0.0 --port 8080 --reload
+```
 
-1. Clone the repository
-    ```bash
-    git clone https://github.com/DineshReddyK/financial-planner.git
-    cd financial-planner
-    ```
+Environment knobs (optional): copy `.env.example` → `.env` for `docker-compose` port overrides.
 
-2. Install the required dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-3. Run the main
-    ```bash
-    streamlit run home.py
-    ```
+---
 
-### Contributing
-Contributions are welcome! If you have any suggestions or improvements, please submit a pull request or open an issue. Let's work together to make financial planning accessible to everyone.
+## Deploy on Render (free tier)
 
+Repo includes [`render.yaml`](render.yaml) (Docker web service) and a Dockerfile that listens on **`PORT`** (Render sets this automatically).
 
-### Disclaimer
-The Financial Planner tools are for informational purposes only and do not constitute financial advice. Please consult with a professional financial advisor before making any financial decisions.
+1. Push this repo to **GitHub** (or GitLab — Render supports both).
+2. Sign up at [render.com](https://render.com) and link your Git provider.
+3. **New** → **Blueprint** → pick this repository → Render reads `render.yaml`.
+4. Confirm the service (name **financial-planner**, **Free** plan) and **Apply**.
+
+First deploy builds the image (a few minutes). Your app URL will look like `https://financial-planner-xxxx.onrender.com`.
+
+**Free tier notes:** The instance **spins down after ~15 minutes idle**; the next visit can take **30–60s** to wake. Chart.js / Tailwind load from CDNs; no extra Render config needed.
+
+To deploy **without** Blueprint: **New** → **Web Service** → connect repo → **Environment** `Docker` → Dockerfile path `./Dockerfile` → create.
+
+---
+
+## Deploy (Docker)
+
+```bash
+./scripts/deploy.sh docker-build
+./scripts/deploy.sh docker-web          # maps host $PORT_WEB → 8080
+
+./scripts/deploy.sh compose-up          # docker compose up --build
+```
+
+The image exposes **8080** (FastAPI).
+
+Production checklist (you still own this):
+
+- Put TLS/reverse proxy (Caddy, nginx, Traefik) in front
+- Pin dependency versions for reproducible builds
+- Do not commit `.env`
+
+---
+
+## Repository layout
+
+```
+planner_core/     # Pure calculation functions
+web/              # FastAPI app, templates, static
+scripts/deploy.sh # install / run / docker helpers
+```
+
+---
+
+## Contributing
+
+Issues and PRs welcome — keep changes focused; extend `planner_core` first, then wire `web/main.py` and `web/routes_extended.py`.
+
+---
+
+## License
+
+See [LICENSE](LICENSE).

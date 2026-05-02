@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% import '_charts_macros.html' as ch %}
+{% block content %}
+<h1 class="text-2xl font-bold text-white">Utilities</h1>
+<div class="mt-3 max-w-3xl space-y-2 text-sm leading-relaxed text-slate-400">
+  <p>Three small helpers on one page: compare annual interest income to typical TDS thresholds (senior vs non-senior); turn nominal return and inflation into a simple real return; estimate how long a corpus lasts with fixed monthly withdrawals and optional inflation on those withdrawals.</p>
+</div>
+<form method="post" class="mt-6 space-y-8">
+  <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+    <h2 class="font-semibold text-white">Senior interest / TDS threshold</h2>
+    <label class="text-sm text-slate-400">Annual interest (₹)<input name="sen_ai" type="number" value="{{ sen_ai | default(60000) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+    <label class="mt-3 flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="sen_sc" {% if senior_checked %}checked{% endif %} /> Senior (60+)</label>
+  </div>
+  <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+    <h2 class="font-semibold text-white">Real return</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="text-sm text-slate-400">Nominal %<input name="rr_n" value="{{ rr_n | default(10) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+      <label class="text-sm text-slate-400">Inflation %<input name="rr_i" value="{{ rr_i | default(6) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+    </div>
+  </div>
+  <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+    <h2 class="font-semibold text-white">SWP runway</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="text-sm text-slate-400">Corpus (₹)<input name="swp_c" value="{{ swp_c | default(5000000) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+      <label class="text-sm text-slate-400">Withdrawal/mo (₹)<input name="swp_w" value="{{ swp_w | default(40000) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+      <label class="text-sm text-slate-400">Return % p.a.<input name="swp_r" value="{{ swp_r | default(8) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+      <label class="text-sm text-slate-400">Withdrawal inflation %<input name="swp_inf" value="{{ swp_inf | default(6) }}" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" /></label>
+    </div>
+  </div>
+  <button type="submit" class="rounded-xl bg-emerald-500 px-6 py-2.5 font-semibold text-slate-950">Run</button>
+</form>
+{% if sen %}
+<div class="mt-8 space-y-3 text-sm text-slate-300">
+  <p>TDS threshold ₹ {{ sen.tds_threshold }} · likely TDS flag {{ sen.likely_tds_if_no_exemption }}</p>
+  <p>Real return ≈ {{ "{:.2f}".format(rr) }}%</p>
+  <p>SWP: {% if swp.months %}~{{ swp.months }} months{% else %}still positive at 100y horizon{% endif %}</p>
+</div>
+<h3 class="mt-6 text-sm font-semibold text-slate-300">Senior interest vs TDS threshold</h3>
+{{ ch.render_chart('util-sen', chart_json_sen) }}
+<h3 class="mt-4 text-sm font-semibold text-slate-300">Real return (Fisher)</h3>
+{{ ch.render_chart('util-rr', chart_json_rr) }}
+<h3 class="mt-4 text-sm font-semibold text-slate-300">SWP corpus path</h3>
+{{ ch.render_chart('util-swp', chart_json_swp) }}
+{% endif %}
+{% endblock %}

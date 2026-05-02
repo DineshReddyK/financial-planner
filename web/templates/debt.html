@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% import '_charts_macros.html' as ch %}
+{% block content %}
+<h1 class="text-2xl font-bold text-white">Debt</h1>
+<div class="mt-3 max-w-3xl space-y-2 text-sm leading-relaxed text-slate-400">
+  <p><strong class="text-slate-300">Credit card:</strong> See how many months it may take to clear a balance at your payment and roughly how much interest you pay — only when each payment covers more than interest.</p>
+  <p><strong class="text-slate-300">Personal loan:</strong> EMI and total paid over the tenure you pick, useful next to the card scenario when weighing consolidation.</p>
+</div>
+<form method="post" class="mt-6 grid gap-6 md:grid-cols-2">
+  <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+    <h2 class="font-semibold text-white">Credit card</h2>
+    <label class="mt-2 block text-xs text-slate-400">Balance<input name="cc_b" value="{{ cc_b | default(150000) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
+    <label class="mt-2 block text-xs text-slate-400">APR %<input name="cc_a" value="{{ cc_a | default(42) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
+    <label class="mt-2 block text-xs text-slate-400">Monthly pay<input name="cc_p" value="{{ cc_p | default(10000) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
+  </div>
+  <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+    <h2 class="font-semibold text-white">Personal loan</h2>
+    <label class="mt-2 block text-xs text-slate-400">Principal<input name="pl_p" value="{{ pl_p | default(200000) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
+    <label class="mt-2 block text-xs text-slate-400">Rate %<input name="pl_r" value="{{ pl_r | default(14) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
+    <label class="mt-2 block text-xs text-slate-400">Months<input name="pl_m" value="{{ pl_m | default(36) }}" class="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5" /></label>
+  </div>
+  <div class="md:col-span-2"><button class="rounded-xl bg-emerald-500 px-6 py-2.5 font-semibold text-slate-950">Calculate</button></div>
+</form>
+{% if cc %}
+<div class="mt-8 grid gap-4 md:grid-cols-2 text-sm">
+  <div class="rounded-xl border border-slate-800 p-4">
+    {% if cc.reachable and cc.months %}
+    Card cleared in {{ cc.months }} mo; interest ≈ ₹ {{ "{:,.0f}".format(cc.total_interest) }}
+    {% else %}
+    Payment too low or never clears (100y cap).
+    {% endif %}
+  </div>
+  <div class="rounded-xl border border-slate-800 p-4">Loan EMI ₹ {{ "{:,.0f}".format(pl.emi) }} · total ₹ {{ "{:,.0f}".format(pl.total_paid) }}</div>
+</div>
+<p class="mt-2 text-xs text-slate-500">Credit card payoff curve when payment clears principal each month.</p>
+{{ ch.render_chart('debt-cc', chart_json_cc) }}
+<p class="mt-2 text-xs text-slate-500">Personal loan principal vs total interest (full tenure).</p>
+{{ ch.render_chart('debt-pl', chart_json_pl) }}
+{% endif %}
+{% endblock %}
