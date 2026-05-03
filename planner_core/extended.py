@@ -8,7 +8,12 @@ from typing import Any
 import numpy as np
 import numpy_financial as npf
 
-from planner_core.services import monthly_emi
+from planner_core.services import (
+    TDS_194A_BANK_THRESHOLD_OTHERS,
+    TDS_194A_BANK_THRESHOLD_SENIOR,
+    TDS_194A_NONBANK_THRESHOLD,
+    monthly_emi,
+)
 
 
 def sip_monthly_for_target(
@@ -250,9 +255,19 @@ def ppf_maturity_estimate(
 def senior_interest_tds_note(
     annual_interest: float,
     is_senior_citizen: bool,
+    *,
+    interest_payer: str = "bank",
 ) -> dict[str, Any]:
-    """Thresholds for interest-only TDS avoidance (illustrative; Form 15H etc. not modeled)."""
-    thr = 50000 if is_senior_citizen else 40000
+    """
+    Section 194A TDS on interest — thresholds after Finance Act 2025 (FY 2025-26+).
+
+    ``interest_payer``: ``"bank"`` = bank / co-op society / post office; ``"other"`` = any other payer (₹10k limit).
+    Form 15G/15H and PAN non-compliance not modeled.
+    """
+    if interest_payer == "bank":
+        thr = TDS_194A_BANK_THRESHOLD_SENIOR if is_senior_citizen else TDS_194A_BANK_THRESHOLD_OTHERS
+    else:
+        thr = TDS_194A_NONBANK_THRESHOLD
     likely_tds = annual_interest > thr
     return {"tds_threshold": thr, "likely_tds_if_no_exemption": likely_tds, "annual_interest": annual_interest}
 

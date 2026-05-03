@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -176,7 +177,14 @@ async def fd_post(request: Request):
     rate = float(form.get("rate", 6))
     months = int(form.get("months", 12))
     tax_slab = float(form.get("tax_slab", 30))
-    m = fd_net_metrics(principal, rate, months, tax_slab)
+    m = fd_net_metrics(
+        principal,
+        rate,
+        months,
+        tax_slab,
+        is_senior_citizen="fd_sc" in form,
+        interest_payer="other" if "fd_other" in form else "bank",
+    )
     ch = fd_waterfall_chart(principal, m["interest_gross"], m["tax_on_interest"], m["net_interest"])
     return templates.TemplateResponse(
         request,
@@ -187,6 +195,8 @@ async def fd_post(request: Request):
             "rate": rate,
             "months": months,
             "tax_slab": tax_slab,
+            "fd_sc": "fd_sc" in form,
+            "fd_other": "fd_other" in form,
             "chart_json": ch,
         },
     )
@@ -316,8 +326,17 @@ class FdIn(BaseModel):
     rate_pct: float = Field(..., ge=0)
     months: int = Field(..., ge=1)
     tax_slab_pct: float = Field(30, ge=0, le=100)
+    is_senior_citizen: bool = False
+    interest_payer: Literal["bank", "other"] = "bank"
 
 
 @app.post("/api/fd")
 async def api_fd(body: FdIn):
-    return fd_net_metrics(body.principal, body.rate_pct, body.months, body.tax_slab_pct)
+    return fd_net_metrics(
+        body.principal,
+        body.rate_pct,
+        body.months,
+        body.tax_slab_pct,
+        is_senior_citizen=body.is_senior_citizen,
+        interest_payer=body.interest_payer,
+    )

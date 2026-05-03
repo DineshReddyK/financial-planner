@@ -1,9 +1,21 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{ title | default("Financial Planner") }} · India</title>
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem("fp-theme") === "light") {
+          document.documentElement.classList.add("fp-light");
+          document.documentElement.style.colorScheme = "light";
+        } else {
+          document.documentElement.style.colorScheme = "dark";
+        }
+      } catch (e) {}
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -14,6 +26,7 @@
       },
     };
   </script>
+  <link rel="stylesheet" href="/static/theme.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -26,6 +39,8 @@
       transition: color 0.15s ease, background-color 0.15s ease;
     }
     .nav-link:hover { color: white; background-color: rgb(30 41 59); }
+    .nav-link-active { color: #34d399 !important; }
+    html.fp-light .nav-link:hover { color: rgb(24 24 27) !important; background-color: rgb(244 244 245) !important; }
     input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
     .result-card {
       border-radius: 0.75rem;
@@ -48,34 +63,78 @@
     }
   </style>
 </head>
-<body class="min-h-full antialiased font-sans" style="background: radial-gradient(ellipse at top, #0d2818 0%, #0f172a 50%, #020617 100%);">
+<body class="min-h-full antialiased font-sans bg-slate-950 text-slate-100 fp-body fp-dark">
 
   <header class="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md">
-    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 gap-4">
-      <a href="/" class="flex shrink-0 items-center gap-2 text-base font-bold tracking-tight text-white hover:text-emerald-300 transition">
-        <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30 text-sm font-bold">₹</span>
-        <span class="hidden sm:inline">Financial Planner</span>
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 gap-3">
+      <a href="/" class="flex shrink-0 items-center gap-2 text-base font-bold tracking-tight text-white hover:text-emerald-300 transition min-w-0">
+        <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30 text-sm font-bold">₹</span>
+        <span class="hidden sm:inline truncate">Financial Planner</span>
       </a>
-      <nav class="hidden md:flex items-center gap-0.5 text-sm overflow-x-auto">
-        <a href="/planner" class="nav-link whitespace-nowrap font-medium" style="color:#34d399">Full plan</a>
+      <nav class="hidden md:flex items-center gap-0.5 text-sm overflow-x-auto flex-1 justify-center min-w-0">
+        <a href="/planner" class="nav-link nav-link-active whitespace-nowrap font-medium">Full plan</a>
         <a href="/investment" class="nav-link whitespace-nowrap">Investment</a>
         <a href="/mortgage" class="nav-link whitespace-nowrap">Mortgage</a>
         <a href="/sip-goal" class="nav-link whitespace-nowrap">SIP Goal</a>
         <a href="/" class="nav-link ml-1 border border-slate-700 hover:border-emerald-500/50 whitespace-nowrap">All tools →</a>
       </nav>
-      <a href="/" class="md:hidden flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-emerald-400 transition border border-slate-700 rounded-lg px-2.5 py-1.5">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-        All tools
-      </a>
+      <div class="flex shrink-0 items-center gap-2">
+        <button type="button" id="fp-theme-toggle" class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50" aria-label="Switch theme" title="Light / dark">
+          <span class="fp-icon-sun h-4 w-4" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          </span>
+          <span class="fp-icon-moon h-4 w-4" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+          </span>
+        </button>
+        <a href="/" class="md:hidden flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-emerald-400 transition border border-slate-700 rounded-lg px-2.5 py-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          All tools
+        </a>
+      </div>
     </div>
   </header>
 
-  <main class="mx-auto max-w-6xl px-4 py-10">
+  <main class="mx-auto max-w-6xl px-4 py-10 fp-content">
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="mx-auto max-w-6xl px-4 pb-10 text-center text-xs text-slate-500">
-    Not financial advice · Numbers are illustrative · Confirm taxes and products with a qualified professional.
+  <footer class="mx-auto max-w-6xl px-4 pb-10 space-y-4 text-center text-xs text-slate-500">
+    <p>Not financial advice · Numbers are illustrative · Confirm taxes and products with a qualified professional.</p>
+    <p class="text-slate-500">
+      <a href="mailto:dineshreddy.klp@gmail.com?subject=Financial%20Planner%20feedback" class="text-slate-400 hover:text-emerald-400 underline-offset-2 hover:underline">Feedback</a>
+      <span class="mx-2 text-slate-600">·</span>
+      <a href="mailto:dineshreddy.klp@gmail.com" class="text-slate-400 hover:text-emerald-400 underline-offset-2 hover:underline">Contact</a>
+      <span class="mx-1 text-slate-600">—</span>
+      <a href="mailto:dineshreddy.klp@gmail.com" class="text-slate-400 hover:text-emerald-400">dineshreddy.klp@gmail.com</a>
+    </p>
   </footer>
+  <script>
+    (function () {
+      var KEY = "fp-theme";
+      var root = document.documentElement;
+      var btn = document.getElementById("fp-theme-toggle");
+      function isLight() {
+        return root.classList.contains("fp-light");
+      }
+      function apply(theme) {
+        if (theme === "light") {
+          root.classList.add("fp-light");
+          root.style.colorScheme = "light";
+        } else {
+          root.classList.remove("fp-light");
+          root.style.colorScheme = "dark";
+        }
+        try {
+          localStorage.setItem(KEY, theme);
+        } catch (e) {}
+      }
+      if (btn) {
+        btn.addEventListener("click", function () {
+          apply(isLight() ? "dark" : "light");
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

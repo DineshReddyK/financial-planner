@@ -3,9 +3,23 @@
 from __future__ import annotations
 
 import math
-from typing import Any
+from typing import Any, Literal
 
 import numpy_financial as npf
+
+# --- India income-tax reference values (FY 2025-26 onwards unless noted) ---
+# Section 194A thresholds when payer is a bank / co-op society / post office (Finance Act 2025).
+TDS_194A_BANK_THRESHOLD_OTHERS = 50_000.0
+TDS_194A_BANK_THRESHOLD_SENIOR = 100_000.0
+# Section 194A when payer is not a bank / co-op society / post office (Finance Act 2025).
+TDS_194A_NONBANK_THRESHOLD = 10_000.0
+TDS_194A_RATE = 0.10
+
+# Specified equity-oriented mutual funds / STT-paid: STCG holding ≤12m (statutory; cess/surcharge not layered here).
+EQUITY_MF_STCG_RATE_PCT = 20.0
+# LTCG on such funds: exemption then rate (cess/surcharge not layered here).
+EQUITY_MF_LTCG_EXEMPT = 125_000.0
+EQUITY_MF_LTCG_RATE = 0.125
 
 
 def monthly_emi(loan_amount: float, annual_rate_pct: float, loan_term_years: int) -> float:
@@ -132,19 +146,33 @@ def calc_investment_retirement_rows(
     return rows
 
 
-def fd_net_metrics(principal: float, rate_pct: float, months: int, tax_slab_pct: float) -> dict[str, float]:
+def fd_net_metrics(
+    principal: float,
+    rate_pct: float,
+    months: int,
+    tax_slab_pct: float,
+    *,
+    is_senior_citizen: bool = False,
+    interest_payer: Literal["bank", "other"] = "bank",
+) -> dict[str, float]:
     """
     FD maturity with monthly compounding (approximation).
 
     Interest is taxed at slab rate. TDS (if any) is withholding against that liability — do not subtract TDS and slab tax twice.
+
+    TDS threshold follows Section 194A as amended by Finance Act 2025 (FY 2025-26+): bank/co-op/post office payers
+    use ₹50k (general) / ₹1L (senior 60+); other payers use ₹10k. PAN / 206AA higher rates not modeled.
     """
     monthly_rate = rate_pct / 100 / 12
     amount = principal * (1 + monthly_rate) ** months
     interest = amount - principal
     tax_on_interest = interest * (tax_slab_pct / 100)
     net_interest = interest - tax_on_interest
-    # Estimated TDS per typical retail FD rules (info only; senior citizen limits differ).
-    tds_estimate = 0.10 * interest if interest > 40000 else 0.0
+    if interest_payer == "bank":
+        tds_threshold = TDS_194A_BANK_THRESHOLD_SENIOR if is_senior_citizen else TDS_194A_BANK_THRESHOLD_OTHERS
+    else:
+        tds_threshold = TDS_194A_NONBANK_THRESHOLD
+    tds_estimate = TDS_194A_RATE * interest if interest > tds_threshold else 0.0
     profit_pct = (net_interest / principal) * 100 if principal else 0.0
     return {
         "maturity_gross": amount,
@@ -152,6 +180,7 @@ def fd_net_metrics(principal: float, rate_pct: float, months: int, tax_slab_pct:
         "tax_on_interest": tax_on_interest,
         "net_interest": net_interest,
         "tds_estimate": tds_estimate,
+        "tds_threshold": tds_threshold,
         "profit_pct": profit_pct,
     }
 
@@ -162,15 +191,22 @@ def calculate_cagr_gain(principal: float, cagr_pct: float, months: int) -> float
 
 
 def mf_after_tax_returns(principal: float, cagr_pct: float, months: int, tax_slab_pct: float) -> dict[str, float]:
+    """
+    After-tax gain on a lump sum for an equity-oriented / STT-paid growth-style MF (illustrative).
+
+    STCG (≤12 months): statutory 20% on gains (not marginal slab). LTCG: 12.5% on gains above ₹1.25L exemption.
+    Cess/surcharge and grandfathering are not applied. ``tax_slab_pct`` is unused for this equity path (kept for API compatibility).
+    """
+    _ = tax_slab_pct  # kept for callers comparing FD (slab) vs MF in one form
     returns = calculate_cagr_gain(principal, cagr_pct, months)
     stcg_tax = 0.0
     ltcg_tax = 0.0
     if months < 12:
-        stcg_tax = (tax_slab_pct / 100) * returns
+        stcg_tax = (EQUITY_MF_STCG_RATE_PCT / 100) * returns
         net_returns = returns - stcg_tax
     else:
-        taxable_ltcg = max(0.0, returns - 125000)
-        ltcg_tax = 0.125 * taxable_ltcg
+        taxable_ltcg = max(0.0, returns - EQUITY_MF_LTCG_EXEMPT)
+        ltcg_tax = EQUITY_MF_LTCG_RATE * taxable_ltcg
         net_returns = returns - ltcg_tax
     profit_pct = (net_returns / principal) * 100 if principal else 0.0
     return {

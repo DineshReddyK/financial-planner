@@ -185,14 +185,18 @@ async def util_get(request: Request):
     return _form(
         request,
         "utilities.html",
-        {"sen": None, "rr": None, "swp": None, "senior_checked": True},
+        {"sen": None, "rr": None, "swp": None, "senior_checked": True, "sen_other_checked": False},
     )
 
 
 @router.post("/utilities", response_class=HTMLResponse)
 async def util_post(request: Request):
     f = dict(await request.form())
-    sen = senior_interest_tds_note(float(f.get("sen_ai", 0)), "sen_sc" in f)
+    sen = senior_interest_tds_note(
+        float(f.get("sen_ai", 0)),
+        "sen_sc" in f,
+        interest_payer="other" if "sen_other" in f else "bank",
+    )
     rr = real_return_pct(float(f.get("rr_n", 0)), float(f.get("rr_i", 6)))
     swp = swp_months_until_depleted(
         float(f.get("swp_c", 0)),
@@ -217,6 +221,7 @@ async def util_post(request: Request):
             "rr": rr,
             "swp": swp,
             "senior_checked": "sen_sc" in f,
+            "sen_other_checked": "sen_other" in f,
             "chart_json_sen": ch_sen,
             "chart_json_rr": ch_rr,
             "chart_json_swp": ch_swp,
